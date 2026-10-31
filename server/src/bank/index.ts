@@ -5,6 +5,10 @@ import { CULTURE } from './data/culture.js';
 import { SCIENCE } from './data/science.js';
 import { ARTS } from './data/arts.js';
 import { MIND } from './data/mind.js';
+import { EXTRA1 } from './data/extra1.js';
+import { EXTRA2 } from './data/extra2.js';
+import { EXTRA3 } from './data/extra3.js';
+import { EXTRA4 } from './data/extra4.js';
 import { QUIZ_BANK } from '../data/quizBank.js';
 import { shuffle } from '../games/util.js';
 
@@ -53,7 +57,7 @@ const legacyDrafts: Omit<Question, 'id'>[] = QUIZ_BANK.map((q) => ({
 /** 内置题库：统一编号。 */
 export const BUILTIN: Question[] = (() => {
   const counter: Record<string, number> = {};
-  return [...LITERATURE, ...HISTORY, ...CULTURE, ...SCIENCE, ...ARTS, ...MIND, ...legacyDrafts].map((d) => {
+  return [...LITERATURE, ...HISTORY, ...CULTURE, ...SCIENCE, ...ARTS, ...MIND, ...legacyDrafts, ...EXTRA1, ...EXTRA2, ...EXTRA3, ...EXTRA4].map((d) => {
     counter[d.bank] = (counter[d.bank] ?? 0) + 1;
     return { ...d, id: `${d.bank}-${counter[d.bank]}` } as Question;
   });
