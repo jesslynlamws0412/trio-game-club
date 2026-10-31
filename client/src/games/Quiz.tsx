@@ -1,12 +1,21 @@
+import { useEffect, useState } from 'react';
 import { AwardList, nameOf, useCountdown, type GameProps } from './shared';
 
 export default function Quiz({ room, view, act }: GameProps) {
   const left = useCountdown(view.endsInMs ?? 0, view);
+  const [picked, setPicked] = useState<number[]>([]); // 多选草稿
+  const [text, setText] = useState(''); // 填空草稿
+
+  // 换题时清空草稿
+  useEffect(() => {
+    setPicked([]);
+    setText('');
+  }, [view.index]);
 
   if (view.phase === 'over') {
     return (
       <div>
-        <h2>📚 答题竞赛 · 最终排名</h2>
+        <h2>📚 题库问答 · 最终排名</h2>
         <ol className="rank">
           {view.ranking.map((r: any) => (
             <li key={r.id}>
@@ -23,48 +32,95 @@ export default function Quiz({ room, view, act }: GameProps) {
   }
 
   const revealing = view.phase === 'reveal';
-  const answered = view.myChoice !== null;
+  const mine = view.myChoice !== null || view.myChoices !== null || view.myText !== null;
+  const choiceType = view.options && view.qtype !== 'multi';
+  const multi = view.qtype === 'multi';
+  const typing = !view.options;
+  const submitText = () => text.trim() && act({ type: 'answer', index: view.index, text: text.trim() });
 
   return (
     <div>
       <h2>
-        📚 答题竞赛 <small>第 {view.index + 1} / {view.total} 题 · {view.category}</small>
+        📚 {view.category} <small>第 {view.index + 1} / {view.total} 题 · {view.difficultyName} · {view.typeName}</small>
       </h2>
       {!revealing && <div className="timer">{left}</div>}
+      {view.image && <div className="q-image">{view.image}</div>}
       <p className="question">{view.question}</p>
-      <div className="options">
-        {view.options.map((o: string, i: number) => {
-          let cls = 'btn opt';
-          if (revealing) {
-            if (i === view.answer) cls += ' right';
-            else if (i === view.myChoice) cls += ' wrong';
-          } else if (view.myChoice === i) cls += ' chosen';
-          return (
-            <button key={i} className={cls} disabled={answered || revealing} onClick={() => act({ type: 'answer', index: view.index, choice: i })}>
-              {view.options.length === 4 ? 'ABCD'[i] + '. ' : ''}{o}
-              {revealing && (
-                <span className="pickers">
-                  {room.players.filter((p) => view.choices[p.id] === i).map((p) => p.avatar).join('')}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+
+      {view.options && (
+        <div className="options">
+          {view.options.map((o: string, i: number) => {
+            let cls = 'btn opt';
+            if (revealing) {
+              const right = multi ? view.answerSet.includes(i) : i === view.answer;
+              const mineHere = multi ? view.myChoices?.includes(i) : i === view.myChoice;
+              if (right) cls += ' right';
+              else if (mineHere) cls += ' wrong';
+            } else if (multi ? picked.includes(i) || view.myChoices?.includes(i) : view.myChoice === i) cls += ' chosen';
+            return (
+              <button
+                key={i}
+                className={cls}
+                disabled={mine || revealing}
+                onClick={() =>
+                  multi
+                    ? setPicked((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]))
+                    : act({ type: 'answer', index: view.index, choice: i })
+                }
+              >
+                {view.options.length === 4 ? 'ABCD'[i] + '. ' : ''}{o}
+                {revealing && choiceType && (
+                  <span className="pickers">
+                    {room.players.filter((p) => view.choices[p.id] === i).map((p) => p.avatar).join('')}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {multi && !mine && !revealing && (
+        <button className="btn primary small" disabled={picked.length === 0} onClick={() => act({ type: 'answer', index: view.index, choices: picked })}>
+          提交答案（已选 {picked.length} 项，必须全对）
+        </button>
+      )}
+
+      {typing && !revealing && !mine && (
+        <div className="chat-input">
+          <input
+            maxLength={40}
+            placeholder="输入你的答案"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && submitText()}
+          />
+          <button className="btn small primary" onClick={submitText}>提交</button>
+        </div>
+      )}
+
       {!revealing && (
         <p className="hint">
-          {answered ? '已提交，等待其他人……' : '越快答对，加分越多'}（已作答 {view.answered.length} / {room.players.length}）
+          {mine ? '已提交，等待其他人……' : '越快答对，加分越多'}（已作答 {view.answered.length} / {room.players.length}）
         </p>
       )}
+
       {revealing && (
-        <ul className="awards">
-          {room.players.map((p) => (
-            <li key={p.id}>
-              <span>{p.avatar} {p.nickname}</span>
-              <b>{view.gains[p.id] > 0 ? `+${view.gains[p.id]}` : '答错/未答'}　合计 {view.points[p.id]}</b>
-            </li>
-          ))}
-        </ul>
+        <>
+          <p className="answer-box">
+            {view.correct[room.you] ? '✅ 答对了！' : '❌ 答错了'}　正确答案：<b>{view.answerText}</b>
+            <br />
+            <span className="hint">解释：{view.explain}</span>
+          </p>
+          <ul className="awards">
+            {room.players.map((p) => (
+              <li key={p.id}>
+                <span>{p.avatar} {p.nickname}{view.shown[p.id] !== null && !choiceType ? `（${view.shown[p.id]}）` : ''}</span>
+                <b>{view.gains[p.id] > 0 ? `+${view.gains[p.id]}` : '答错/未答'}　合计 {view.points[p.id]}</b>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   );

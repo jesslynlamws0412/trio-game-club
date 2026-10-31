@@ -14,6 +14,12 @@ export function send(event: string, data?: unknown): Promise<Ack> {
   });
 }
 
+/** 题库相关请求：自动带上这个浏览器的身份和昵称，返回值按服务器原样（any） */
+export function request(event: string, data: Record<string, unknown> = {}): Promise<any> {
+  const p = loadProfile();
+  return send(event, { deviceId: getDeviceId(), nickname: p?.nickname, avatar: p?.avatar, ...data });
+}
+
 const KEY = 'trio-session';
 export interface Session {
   code: string;

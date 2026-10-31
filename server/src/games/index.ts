@@ -15,10 +15,10 @@ import { RpsGame } from './rps.js';
 import { IdiomGame } from './idiom.js';
 import { TruthGame } from './truth.js';
 import { ReactionGame } from './reaction.js';
+import { QUIZ_GAMES } from '../bank/games.js';
 
 const factories: Record<string, (ctx: GameCtx) => GameEngine> = {
   undercover: (c) => new UndercoverGame(c),
-  quiz: (c) => new QuizGame(c),
   turtlesoup: (c) => new TurtleSoupGame(c),
   draw: (c) => new DrawGame(c),
   cards: (c) => new CardsGame(c),
@@ -36,6 +36,9 @@ const factories: Record<string, (ctx: GameCtx) => GameEngine> = {
   truth: (c) => new TruthGame(c),
   reaction: (c) => new ReactionGame(c),
 };
+
+// 所有题库类游戏共用一个引擎，只是题库筛选条件不同
+for (const cfg of QUIZ_GAMES) factories[cfg.id] = (c) => new QuizGame(c, cfg);
 
 /** 返回 null 表示该游戏尚未实现 */
 export function createEngine(gameId: string, ctx: GameCtx): GameEngine | null {

@@ -6,6 +6,7 @@ export interface GameInfo {
   rules: string[];
   ready: boolean;
   modes: string[];
+  bank: boolean;
 }
 
 export interface PlayerView {
@@ -30,6 +31,9 @@ export interface RoomView {
   gamesPlayed: number;
   history: { game: string; at: number; results: { nickname: string; avatar: string; points: number }[] }[];
   selectedGame: string | null;
+  settings: { difficulty: number; customBank: string | null };
+  customBankName: string | null;
+  bankChoices: { id: string; name: string; count: number; ownerName: string }[];
   game: any;
   gameOver: boolean;
   awards: Record<string, number> | null;

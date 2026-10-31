@@ -4,6 +4,7 @@
  * 这里描述整个大厅要展示的游戏。liveModes 才是目前真正能玩的模式，其余都是规划。
  */
 import { findGame, type ModeId } from './catalog.js';
+import { QUIZ_GAMES } from '../bank/games.js';
 
 export type { ModeId };
 
@@ -63,6 +64,7 @@ const LIVE = new Set([
   'undercover', 'draw', 'quiz', 'werewolf', 'monopoly', 'cards', 'turtlesoup', 'detective',
   'likely', 'tacit', 'dice', 'number', 'memory',
   'truefalse', 'rps', 'idiom', 'truth', 'reaction',
+  ...QUIZ_GAMES.map((q) => q.id),
 ]);
 
 function g(id: string, name: string, icon: string, category: string, codes: string): PlatformGame {
@@ -85,21 +87,7 @@ const ALL = 'SDTP';
 
 export const PLATFORM_GAMES: PlatformGame[] = [
   // A 知识问答
-  g('quiz', '答题竞赛', '📚', 'quiz', ALL),
-  g('p-quiz-common', '常识问答', '💡', 'quiz', ALL),
-  g('p-quiz-cnhist', '中国历史问答', '🏯', 'quiz', ALL),
-  g('p-quiz-whist', '世界历史问答', '🗿', 'quiz', ALL),
-  g('p-quiz-cnlit', '中国文学问答', '📖', 'quiz', ALL),
-  g('p-quiz-wlit', '世界文学问答', '📕', 'quiz', ALL),
-  g('p-quiz-mylit', '马华文学问答', '🌴', 'quiz', ALL),
-  g('p-quiz-culture', '中国文化问答', '🏮', 'quiz', ALL),
-  g('p-quiz-geo', '世界地理问答', '🌏', 'quiz', ALL),
-  g('p-quiz-sci', '科学知识问答', '🔬', 'quiz', ALL),
-  g('p-quiz-film', '影视知识问答', '🎬', 'quiz', ALL),
-  g('p-quiz-music', '音乐知识问答', '🎵', 'quiz', ALL),
-  g('p-quiz-idiom', '成语知识问答', '📜', 'quiz', ALL),
-  g('p-quiz-poem', '古典诗词问答', '🖋️', 'quiz', ALL),
-  g('p-quiz-trivia', '趣味冷知识问答', '🧊', 'quiz', ALL),
+  ...QUIZ_GAMES.filter((q) => q.category === 'quiz').map((q) => g(q.id, q.name, q.icon, 'quiz', ALL)),
   // B 文字与语言
   g('p-word-guess', '猜词游戏', '🔡', 'word', 'SDTP'),
   g('idiom', '成语接龙', '🐉', 'word', ALL),
@@ -120,7 +108,7 @@ export const PLATFORM_GAMES: PlatformGame[] = [
   g('truefalse', '真假判断', '⚖️', 'puzzle', 'SDTP'),
   g('p-puz-liar', '找出说谎者', '🤥', 'puzzle', 'TP'),
   g('p-puz-escape', '密室逃脱', '🚪', 'puzzle', 'SDTP'),
-  g('p-puz-logic', '逻辑推理', '🧠', 'puzzle', 'SD'),
+  ...QUIZ_GAMES.filter((q) => q.category === 'puzzle').map((q) => g(q.id, q.name, q.icon, 'puzzle', ALL)),
   g('p-puz-clue', '线索拼图', '🗂️', 'puzzle', 'SDTP'),
   g('p-puz-mystery', '神秘案件', '🕯️', 'puzzle', 'SDTP'),
   g('p-puz-murderer', '谁是凶手', '🔪', 'puzzle', 'TP'),

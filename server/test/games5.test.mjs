@@ -115,6 +115,9 @@ async function finish(list) {
 
 // ---------- 成语接龙 ----------
 const next = (cur, used) => IDIOMS.find((i) => i[0] === cur[cur.length - 1] && !used.has(i));
+// 选一个自己接完之后对方仍有路可走的成语（避免触发“无路可走再 +2 分、换新开头”）
+const nextSafe = (cur, used) =>
+  IDIOMS.find((i) => i[0] === cur[cur.length - 1] && !used.has(i) && IDIOMS.some((j) => j[0] === i[3] && j !== i && !used.has(j)));
 {
   const list = await start('duo', 2, 'idiom');
   const [A, B] = list;
@@ -133,11 +136,11 @@ const next = (cur, used) => IDIOMS.find((i) => i[0] === cur[cur.length - 1] && !
   assert.match(bad2.error, /词库里没有/);
   assert.match(bad3.error, /开头/);
   ok('接龙校验：不是四字 / 词库没有 / 首字不对，都被拒绝且不扣命');
-  const first = next(v.current, used);
+  const first = nextSafe(v.current, used) ?? next(v.current, used);
   assert.ok((await act(cur, { type: 'say', text: first })).ok);
   used.add(first);
   await wait(80);
-  assert.equal(A.state.game.points[cur.state.you], 1);
+  assert.ok([1, 3].includes(A.state.game.points[cur.state.you]), '接对 +1（若接完无路可走再 +2）');
   assert.equal(A.state.game.current, first);
   ok('接对一个成语 +1 分，轮到对方');
   // 对方一直不接 → 连续超时 3 次出局；每次轮到 cur 时 cur 接对

@@ -1,3 +1,5 @@
+import { QUIZ_GAMES } from '../bank/games.js';
+
 export type ModeId = 'solo' | 'duo' | 'trio' | 'party';
 
 /** 各模式的房间人数范围；三人模式固定 3 人（保持原有规则） */
@@ -18,6 +20,8 @@ export interface GameInfo {
   ready: boolean;
   /** 该游戏能玩的人数模式 */
   modes: ModeId[];
+  /** 是否从题库抽题（房主可以在大厅里设置难度、选择自定义题库） */
+  bank: boolean;
 }
 
 /** 默认只支持三人；已适配其他人数的游戏在这里登记 */
@@ -37,7 +41,25 @@ const MODES_BY_GAME: Record<string, ModeId[]> = {
   reaction: ['solo', 'duo', 'trio', 'party'],
 };
 
-const BASE_CATALOG: Omit<GameInfo, 'modes'>[] = [
+const QUIZ_IDS = new Set(QUIZ_GAMES.map((g) => g.id));
+
+/** 题库类游戏（除了最早的答题竞赛）按 bank/games.ts 的配置统一生成 */
+const QUIZ_ENTRIES: Omit<GameInfo, 'modes' | 'bank'>[] = QUIZ_GAMES.filter((g) => g.id !== 'quiz').map((g) => ({
+  id: g.id,
+  name: g.name,
+  icon: g.icon,
+  tagline: g.tagline,
+  ready: true,
+  rules: [
+    '共 10 题，从对应题库随机抽取，同一局不会重复，同一房间连续玩也尽量不重复。',
+    '题型包括单选、多选（必须全对）、判断、填空、简答、图片猜题和文字推理，限时作答（选择题 15 秒，多选 20 秒，打字题 25 秒）。',
+    '答对得 10 分，并按速度加 0~5 分。揭晓时显示正确答案和解释。',
+    '房主可以在大厅里设置难度，也可以选择自定义题库。',
+    '结束后按总分排名：第一 +3、第二 +2、第三 +1 计入总积分。',
+  ],
+}));
+
+const BASE_CATALOG: Omit<GameInfo, 'modes' | 'bank'>[] = [
   {
     id: 'undercover',
     name: '谁是卧底',
@@ -268,7 +290,11 @@ const BASE_CATALOG: Omit<GameInfo, 'modes'>[] = [
   },
 ];
 
-export const GAME_CATALOG: GameInfo[] = BASE_CATALOG.map((g) => ({ ...g, modes: MODES_BY_GAME[g.id] ?? ['trio'] }));
+export const GAME_CATALOG: GameInfo[] = [...BASE_CATALOG, ...QUIZ_ENTRIES].map((g) => ({
+  ...g,
+  bank: QUIZ_IDS.has(g.id),
+  modes: QUIZ_IDS.has(g.id) ? (['solo', 'duo', 'trio', 'party'] as ModeId[]) : (MODES_BY_GAME[g.id] ?? ['trio']),
+}));
 
 export function findGame(id: string | null | undefined): GameInfo | undefined {
   return GAME_CATALOG.find((g) => g.id === id);

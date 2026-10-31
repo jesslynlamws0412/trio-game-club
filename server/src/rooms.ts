@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { GAME_CATALOG, MODE_LIMITS, findGame, type ModeId } from './games/catalog.js';
 import { createEngine } from './games/index.js';
-import type { GameEngine, Result } from './games/types.js';
-import { recordGame, touchProfile, validDeviceId } from './store.js';
+import type { GameEngine, Result, RoomSettings } from './games/types.js';
+import { bankChoicesFor, bankForGame, bankName, recordAnswers, recordGame, touchProfile, validDeviceId } from './store.js';
 
 export type { Result };
 
@@ -34,6 +34,10 @@ export interface Room {
   gamesPlayed: number;
   history: { game: string; at: number; results: { nickname: string; avatar: string; points: number }[] }[];
   engine: GameEngine | null;
+  /** 房主设置（难度、自定义题库） */
+  settings: RoomSettings;
+  /** 本房间已出过的题库题目，连续玩时尽量不重复 */
+  usedQuestions: Set<string>;
 }
 
 const rooms = new Map<string, Room>();
@@ -96,6 +100,8 @@ export function createRoom(
     gamesPlayed: 0,
     history: [],
     engine: null,
+    settings: { difficulty: 0, customBank: null },
+    usedQuestions: new Set(),
   };
   rooms.set(room.code, room);
   return { ok: true, room, player };
@@ -180,6 +186,28 @@ export function resolveGame(room: Room): string | null {
   return host?.vote && top.includes(host.vote) ? host.vote : top[0];
 }
 
+/** 房主在大厅里设置题库难度和自定义题库（只影响题库类游戏）。 */
+export function setSettings(room: Room, player: Player, data: any): Result {
+  if (player.id !== room.hostId) return { ok: false, error: '只有房主可以修改设置' };
+  if (room.phase !== 'lobby') return { ok: false, error: '游戏进行中不能修改设置' };
+  const next: RoomSettings = { ...room.settings };
+  if (data?.difficulty !== undefined) {
+    if (![0, 1, 2, 3].includes(data.difficulty)) return { ok: false, error: '难度无效' };
+    next.difficulty = data.difficulty;
+  }
+  if (data?.customBank !== undefined) {
+    if (data.customBank === null) next.customBank = null;
+    else {
+      const host = room.players.find((p) => p.id === room.hostId);
+      const res = bankForGame(data.customBank, host?.deviceId ?? null, room.mode);
+      if (!res.ok) return res;
+      next.customBank = data.customBank;
+    }
+  }
+  room.settings = next;
+  return { ok: true };
+}
+
 export function startGame(room: Room, player: Player, notify: () => void): Result {
   if (player.id !== room.hostId) return { ok: false, error: '只有房主可以开始游戏' };
   if (room.phase !== 'lobby') return { ok: false, error: '游戏已经开始' };
@@ -191,10 +219,24 @@ export function startGame(room: Room, player: Player, notify: () => void): Resul
   if (room.players.some((p) => !p.ready)) return { ok: false, error: '还有玩家没有准备' };
   const gameId = resolveGame(room);
   if (!gameId) return { ok: false, error: '请先选择一个游戏' };
+  // 题库类游戏：房主选了自定义题库就从里面抽题；选择时检查过权限，这里开始前再检查一次（题库可能被删改）
+  let customQuestions = null;
+  let customName: string | null = null;
+  if (findGame(gameId)?.bank && room.settings.customBank) {
+    const host = room.players.find((p) => p.id === room.hostId);
+    const res = bankForGame(room.settings.customBank, host?.deviceId ?? null, room.mode);
+    if (!res.ok) return res;
+    customQuestions = res.questions;
+    customName = res.name;
+  }
   room.engine = createEngine(gameId, {
     players: room.players.map((p) => ({ id: p.id, nickname: p.nickname })),
     rotation: room.gamesPlayed,
     notify,
+    settings: room.settings,
+    used: room.usedQuestions,
+    customQuestions,
+    customName,
   });
   room.phase = 'playing';
   room.currentGame = gameId;
@@ -207,6 +249,9 @@ function settle(room: Room) {
   const scores = room.engine.scores();
   for (const p of room.players) p.score += scores[p.id] ?? 0;
   const results = room.players.map((p) => ({ nickname: p.nickname, avatar: p.avatar, points: scores[p.id] ?? 0 }));
+  for (const p of room.players) {
+    recordAnswers(p.deviceId, (room.engine.answerLog?.() ?? []).filter((e) => e.playerId === p.id));
+  }
   room.history.push({ game: room.currentGame, at: Date.now(), results });
   room.gamesPlayed += 1;
   recordGame(
@@ -287,6 +332,10 @@ export function viewFor(room: Room, viewer: Player) {
     gamesPlayed: room.gamesPlayed,
     history: room.history.slice(-8).reverse(),
     selectedGame: resolveGame(room),
+    settings: room.settings,
+    customBankName: bankName(room.settings.customBank),
+    // 只有房主需要看到可选的自定义题库列表
+    bankChoices: viewer.id === room.hostId ? bankChoicesFor(viewer.deviceId, room.mode) : [],
     game: room.engine ? room.engine.viewFor(viewer.id) : null,
     gameOver: room.engine?.isOver() ?? false,
     awards: room.engine?.isOver() ? room.engine.scores() : null,

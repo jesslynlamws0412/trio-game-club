@@ -203,6 +203,40 @@ export default function Room({ room, onLeave }: Props) {
         <p className="selected-line">
           {selected ? <>当前选中：<b>{selected.icon} {selected.name}</b></> : '还没有人选择游戏'}
         </p>
+        {selected?.bank && (
+          <div className="settings-box">
+            <b>题库设置</b>
+            {isHost ? (
+              <div className="settings-row">
+                <label>
+                  难度
+                  <select value={room.settings.difficulty} onChange={(e) => call('room:settings', { difficulty: Number(e.target.value) })}>
+                    <option value={0}>不限</option>
+                    <option value={1}>简单</option>
+                    <option value={2}>普通</option>
+                    <option value={3}>困难</option>
+                  </select>
+                </label>
+                <label>
+                  题库
+                  <select
+                    value={room.settings.customBank ?? ''}
+                    onChange={(e) => call('room:settings', { customBank: e.target.value || null })}
+                  >
+                    <option value="">内置题库</option>
+                    {room.bankChoices.map((b) => (
+                      <option key={b.id} value={b.id}>{b.name}（{b.count} 题 · {b.ownerName}）</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            ) : (
+              <p className="hint">
+                难度：{['不限', '简单', '普通', '困难'][room.settings.difficulty]}　题库：{room.customBankName ?? '内置题库'}（由房主设置）
+              </p>
+            )}
+          </div>
+        )}
         {isHost ? (
           <button className="btn primary wide" disabled={!allReady || !selected} onClick={() => call('room:start')}>
             开始游戏

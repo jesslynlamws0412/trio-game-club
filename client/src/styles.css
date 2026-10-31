@@ -340,3 +340,17 @@ img, canvas, svg { max-width: 100%; }
 .react-pad.bad { background: var(--brown-light); }
 .react-pad.rev { background: var(--cream-dark); color: var(--brown); }
 .react-pad:disabled { cursor: default; }
+
+/* ===== Phase 5: 题库系统 ===== */
+.q-image { font-size: 48px; text-align: center; margin: 6px 0; letter-spacing: 6px; }
+.answer-box { background: var(--cream-dark); border-left: 4px solid var(--gold); padding: 8px 10px; border-radius: 4px; margin: 8px 0; }
+.settings-box { border: 1px dashed var(--brown-light); border-radius: 6px; padding: 8px 10px; margin: 8px 0; }
+.settings-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+.settings-row label { display: flex; flex-direction: column; font-size: 13px; gap: 2px; min-width: 120px; flex: 1; }
+.settings-row select, .field select, .field textarea { padding: 8px; font-family: var(--font); border: 1px solid var(--brown-light); border-radius: 4px; background: #fffaf0; font-size: 15px; width: 100%; box-sizing: border-box; }
+.q-card { padding-bottom: 10px; }
+.q-meta { display: flex; gap: 6px; align-items: center; }
+.fav-btn { margin-left: auto; background: none; border: none; font-size: 24px; color: var(--gold); cursor: pointer; }
+.bank-row { width: 100%; background: none; border: none; border-bottom: 1px dotted var(--brown-light); text-align: left; font-family: var(--font); color: inherit; cursor: pointer; }
+.opt-edit { display: flex; gap: 6px; align-items: center; margin: 4px 0; }
+.opt-edit input[type='text'], .opt-edit input:not([type]) { flex: 1; }

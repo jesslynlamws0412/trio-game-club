@@ -5,7 +5,12 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Server, type Socket } from 'socket.io';
 import { PLATFORM } from './games/platform.js';
-import { flushStore, getProfile, topPlayers, validDeviceId } from './store.js';
+import { BANKS, BUILTIN, bankStats, hasOptions } from './bank/index.js';
+import { cleanBankName, cleanVisibility } from './bank/custom.js';
+import {
+  browseCustom, createBank, deleteBank, deleteQuestion, favoriteIds, favoriteQuestions, flushStore, getProfile,
+  listBanksFor, saveQuestion, toggleFavorite, topPlayers, touchProfile, updateBank, validDeviceId,
+} from './store.js';
 import {
   RECONNECT_GRACE_MS,
   createRoom,
@@ -13,6 +18,7 @@ import {
   getRoom,
   joinRoom,
   kickPlayer,
+  setSettings,
   removePlayer,
   resumeRoom,
   setReady,
@@ -115,6 +121,89 @@ io.on('connection', (socket) => {
     reply(ack, { ok: true, me: mine, top: topPlayers(10) });
   });
 
+  // ───── 题库中心 / 自定义题库（身份同样只凭自己的 deviceId）─────
+  const device = (d: any): string | null => {
+    if (!validDeviceId(d?.deviceId)) return null;
+    // 创建题库时用来显示“作者”的昵称
+    if (typeof d.nickname === 'string' && d.nickname.trim() && d.nickname.length <= 8) touchProfile(d.deviceId, d.nickname.trim(), typeof d.avatar === 'string' ? d.avatar.slice(0, 8) : '🦊');
+    return d.deviceId;
+  };
+  const needDevice = (d: any, ack?: Ack): string | null => {
+    const id = device(d);
+    if (!id) reply(ack, { ok: false, error: '无法识别你的浏览器，请刷新页面重试' });
+    return id;
+  };
+
+  on('bank:list', (d, ack) => {
+    const id = device(d);
+    reply(ack, { ok: true, banks: bankStats(), favorites: id ? favoriteIds(id) : [], custom: listBanksFor(id ?? '') });
+  });
+  on('bank:browse', (d, ack) => {
+    const id = device(d);
+    const bankId = d?.bankId;
+    let questions: any[];
+    let title: string;
+    if (bankId === 'favorites') {
+      if (!id) return reply(ack, { ok: false, error: '无法识别你的浏览器，请刷新页面重试' });
+      questions = favoriteQuestions(id);
+      title = '我的收藏';
+    } else if (typeof bankId === 'string' && bankId.startsWith('cb-')) {
+      const res = browseCustom(id ?? '', bankId);
+      if (!res.ok) return reply(ack, res);
+      questions = res.questions;
+      title = res.bank.name;
+    } else {
+      const info = BANKS.find((b) => b.id === bankId);
+      if (!info) return reply(ack, { ok: false, error: '题库不存在' });
+      questions = BUILTIN.filter((q) => q.bank === bankId);
+      title = info.name;
+    }
+    if ([1, 2, 3].includes(d?.difficulty)) questions = questions.filter((q) => q.difficulty === d.difficulty);
+    if (typeof d?.type === 'string' && d.type) questions = questions.filter((q) => q.type === d.type);
+    reply(ack, { ok: true, title, questions: questions.slice(0, 300), favorites: id ? favoriteIds(id) : [] });
+  });
+  on('bank:fav', (d, ack) => {
+    const id = needDevice(d, ack);
+    if (id) reply(ack, toggleFavorite(id, d?.questionId));
+  });
+  on('bank:create', (d, ack) => {
+    const id = needDevice(d, ack);
+    if (!id) return;
+    const name = cleanBankName(d?.name);
+    const vis = cleanVisibility(d?.visibility);
+    if (!name) return reply(ack, { ok: false, error: '题库名称需要 1~20 个字' });
+    if (!vis) return reply(ack, { ok: false, error: '请选择公开范围' });
+    reply(ack, createBank(id, name, vis));
+  });
+  on('bank:update', (d, ack) => {
+    const id = needDevice(d, ack);
+    if (!id) return;
+    const patch: { name?: string; visibility?: 'private' | 'room' | 'public' } = {};
+    if (d?.name !== undefined) {
+      const n = cleanBankName(d.name);
+      if (!n) return reply(ack, { ok: false, error: '题库名称需要 1~20 个字' });
+      patch.name = n;
+    }
+    if (d?.visibility !== undefined) {
+      const v = cleanVisibility(d.visibility);
+      if (!v) return reply(ack, { ok: false, error: '请选择公开范围' });
+      patch.visibility = v;
+    }
+    reply(ack, updateBank(id, d?.bankId, patch));
+  });
+  on('bank:delete', (d, ack) => {
+    const id = needDevice(d, ack);
+    if (id) reply(ack, deleteBank(id, d?.bankId));
+  });
+  on('bank:saveq', (d, ack) => {
+    const id = needDevice(d, ack);
+    if (id) reply(ack, saveQuestion(id, d?.bankId, d?.question));
+  });
+  on('bank:delq', (d, ack) => {
+    const id = needDevice(d, ack);
+    if (id) reply(ack, deleteQuestion(id, d?.bankId, d?.questionId));
+  });
+
   // 需要已在房间内的操作，统一用 act() 包装：执行 → 成功则广播
   const act = (event: string, fn: (room: Room, player: Player, data: any) => Result) => {
     on(event, (data, ack) => {
@@ -143,6 +232,7 @@ io.on('connection', (socket) => {
     }
     broadcast(c.room);
   });
+  act('room:settings', (r, p, d) => setSettings(r, p, d));
   act('room:profile', (r, p, d) => updateProfile(r, p, d?.nickname, d?.avatar));
   act('room:ready', (r, p, d) => setReady(r, p, d?.ready));
   act('room:vote', (r, p, d) => voteGame(r, p, d?.gameId));

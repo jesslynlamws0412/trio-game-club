@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import Home from './Home';
 import Profile from './Profile';
+import BankCenter from './BankCenter';
+import CustomBanks from './CustomBanks';
 
 type ModeId = 'solo' | 'duo' | 'trio' | 'party';
 interface ModeInfo { id: ModeId; name: string; en: string; icon: string; players: string; desc: string; open: boolean }
@@ -11,7 +13,12 @@ interface PGame {
 }
 interface PlatformData { modes: ModeInfo[]; categories: CategoryInfo[]; games: PGame[] }
 
-type View = { page: 'hub' } | { page: 'room'; mode: ModeId } | { page: 'games'; mode: ModeId | 'all' };
+type View =
+  | { page: 'hub' }
+  | { page: 'room'; mode: ModeId }
+  | { page: 'games'; mode: ModeId | 'all' }
+  | { page: 'bank' }
+  | { page: 'custom' };
 
 function playersText(g: PGame) {
   return g.minPlayers === g.maxPlayers ? `${g.minPlayers} 人` : `${g.minPlayers}~${g.maxPlayers} 人`;
@@ -30,6 +37,8 @@ export default function Platform() {
       .catch(() => setFailed(true));
   }, []);
 
+  if (view.page === 'bank') return <BankCenter onBack={() => setView({ page: 'hub' })} onCustom={() => setView({ page: 'custom' })} />;
+  if (view.page === 'custom') return <CustomBanks onBack={() => setView({ page: 'bank' })} />;
   if (view.page === 'room') return <Home mode={view.mode} onBack={() => setView({ page: 'hub' })} />;
 
   if (!data) {
@@ -85,6 +94,7 @@ export default function Platform() {
         </div>
         <div className="actions">
           <button className="btn" onClick={() => setView({ page: 'games', mode: 'all' })}>浏览游戏大厅</button>
+          <button className="btn gold" onClick={() => setView({ page: 'bank' })}>📚 题库中心</button>
         </div>
       </section>
 
