@@ -1,4 +1,8 @@
-# 三人游戏俱乐部（TRIO GAME CLUB）
+# 复古桌游俱乐部（原“三人游戏俱乐部”）
+
+支持单人、双人、三人、多人（4~8 人）的联机桌游平台，目前已有 34 款可玩的游戏（其余在大厅里标为“开发中”）。
+
+线上地址：https://trio-game-club.onrender.com （免费托管，15 分钟没人访问会休眠，再打开要等约 1 分钟）
 
 ## 本地运行（Windows）
 
@@ -20,20 +24,26 @@
 
 ## 测试
 
-服务器启动后运行：
+一键运行全部测试（自动启动临时服务器，约 5 分钟）：
 
-    node server/test/lobby.test.mjs
+    npm test
 
-更多测试脚本在 `server/test/`：`lobby`、`games`、`games2`、`games3`（联机）、`profile`（战绩）、`monopoly.unit.ts`（规则）。
-运行游戏测试时建议先设置：`$env:QUIZ_REVEAL_MS=150; $env:DRAW_REVEAL_MS=200; $env:MONOPOLY_MAX_ROUNDS=3`。
-一个人想试玩：先启动服务器，再运行 `node server/test/bots.mjs <游戏id>`，机器人会当另外两位玩家。
+测试结果和覆盖范围见 `docs/测试报告.md`。单独运行某个测试需要先启动服务器，脚本都在 `server/test/`。
+一个人想试玩多人游戏：先启动服务器，再运行 `node server/test/bots.mjs <游戏id>`，机器人会当另外的玩家。
 
-## 玩家战绩存在哪里
+## 数据存在哪里
 
-玩家的累计积分、胜场和最近对局保存在 `server/storage/store.json`（可用环境变量 `DATA_DIR` 改位置）。
-玩家身份 = 浏览器里保存的随机 ID，**清除浏览器数据会变成新玩家**。
-注意：部分免费托管服务重启或重新部署时会清空磁盘，战绩也会丢失（部署阶段再处理）。
+玩家资料、战绩、游戏记录、好友、成就、自定义题库、收藏都保存在 `server/storage/store.json`（可用环境变量 `DATA_DIR` 改位置）。
+- 备份：复制这个文件。恢复：停掉服务器，把备份放回原位，再启动。
+- 玩家身份 = 浏览器里保存的随机 ID，**清除浏览器数据会变成新玩家**。
+- 免费托管（Render）重启、休眠或重新部署时会清空磁盘，数据也会丢失。
+
+## 题库
+
+内置题库在 `server/src/bank/data/`，按题库分文件，格式见 `server/src/bank/build.ts`。游戏逻辑只通过 `server/src/bank/index.ts` 抽题和判题，加题不需要改游戏代码。
 
 ## 文档
 
-规划与全部游戏规则见 `docs/PLAN.md`。
+- `docs/PLAN.md`：最初的规划与老游戏规则
+- `docs/部署指南.md`：怎么上线、怎么更新
+- `docs/测试报告.md`：第七阶段测试结果与已知问题
