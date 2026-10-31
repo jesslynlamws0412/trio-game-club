@@ -46,8 +46,8 @@ const closeAll = async () => {
   assert.equal(socks[0].state.mode, 'trio');
   assert.equal(socks[0].state.maxPlayers, 3);
   assert.equal(socks[0].state.minPlayers, 3);
-  assert.equal(socks[0].state.catalog.length, 8, '三人房间应显示全部 8 款游戏');
-  ok('默认三人房间：3 人、全部 8 款游戏');
+  for (const id of ['undercover','draw','quiz','werewolf','monopoly','cards','turtlesoup','detective']) assert.ok(socks[0].state.catalog.some((g) => g.id === id), '三人房间缺少原有游戏 ' + id);
+  ok('默认三人房间：3 人、原有 8 款游戏都在');
   await closeAll();
 }
 
@@ -61,9 +61,9 @@ ok('未知模式被拒绝');
   const st = socks[0].state;
   assert.equal(st.mode, 'solo');
   assert.deepEqual([st.minPlayers, st.maxPlayers], [1, 1]);
-  assert.deepEqual(st.catalog.map((g) => g.id), ['quiz']);
+  assert.ok(st.catalog.every((g) => g.modes.includes('solo')) && st.catalog.some((g) => g.id === 'quiz'));
   assert.equal((await emit(socks[1], 'room:join', { code, nickname: '乙', avatar: '🐻' })).ok, false);
-  ok('单人房间：只有答题竞赛可选，第 2 人无法加入');
+  ok('单人房间：只显示支持单人的游戏，第 2 人无法加入');
   assert.equal((await emit(socks[0], 'room:vote', { gameId: 'monopoly' })).ok, false);
   ok('单人房间不能投不支持的游戏');
   await emit(socks[0], 'room:vote', { gameId: 'quiz' });
@@ -87,9 +87,9 @@ ok('未知模式被拒绝');
 {
   const code = await open('duo', 2);
   const st = socks[0].state;
-  assert.deepEqual(st.catalog.map((g) => g.id).sort(), ['draw', 'quiz', 'turtlesoup']);
+  assert.ok(st.catalog.every((g) => g.modes.includes('duo')) && ['draw', 'quiz', 'turtlesoup'].every((id) => st.catalog.some((g) => g.id === id)));
   assert.equal((await emit(socks[2], 'room:join', { code, nickname: '丙', avatar: '🐱' })).ok, false);
-  ok('双人房间：3 款游戏可选，第 3 人无法加入');
+  ok('双人房间：只显示支持双人的游戏，第 3 人无法加入');
   await emit(socks[0], 'room:vote', { gameId: 'draw' });
   assert.equal((await emit(socks[0], 'room:start')).ok, false);
   await readyAll(2);
@@ -162,7 +162,8 @@ ok('未知模式被拒绝');
   const ids = socks.slice(0, 8).map((s) => s.state.you);
   const q = socks[0].state.game;
   for (let i = 0; i < 8; i++) {
-    assert.ok((await emit(socks[i], 'game:action', { type: 'answer', index: q.index, choice: i % 4 })).ok);
+    const r = await emit(socks[i], 'game:action', { type: 'answer', index: q.index, choice: i % q.options.length });
+    assert.ok(r.ok, JSON.stringify(r) + ' i=' + i);
   }
   await wait();
   assert.equal(socks[7].state.game.phase, 'reveal');

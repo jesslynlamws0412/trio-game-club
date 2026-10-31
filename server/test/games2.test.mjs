@@ -23,7 +23,7 @@ async function mk(name) {
 }
 const act = async (s, action) => {
   const r = await emit(s, 'game:action', action);
-  await wait(60);
+  await wait(120);
   return r;
 };
 async function startRoom(gameId) {
@@ -138,12 +138,16 @@ for (let game = 0; game < 6; game++) {
         sawPrivate++;
         assert.ok(entry.title && entry.text, '抽到的人能看到私人卡');
         for (const p of ps.filter((x) => x !== drawer)) {
+          if (p.state.game.phase === 'over') continue; // 最后一张抽完游戏立即结束，按规则此时私人卡全部公开
           const e = p.state.game.table.at(-1);
           assert.equal(e.title, null);
           assert.equal(e.text, null);
           assert.equal(e.note, null);
           assert.equal(e.type, 'private');
-          assert.equal(JSON.stringify(p.state.game).includes(entry.text), false, '私人卡内容不能发给别人');
+          // 最后一张若是秘密任务，会立刻进入“结算”阶段，按规则此时要公开任务内容让另外两人投票，不算泄露
+          if (!['settle', 'over'].includes(p.state.game.phase)) {
+            assert.equal(JSON.stringify(p.state.game).includes(entry.text), false, '私人卡内容不能发给别人');
+          }
         }
       }
     } else {

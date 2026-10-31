@@ -313,3 +313,20 @@ img, canvas, svg { max-width: 100%; }
 .lg-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .lg-meta { font-size: 12px; color: var(--brown-light); }
 @media (min-width: 640px) { .mode-grid { grid-template-columns: repeat(4, 1fr); } }
+
+/* ===== Phase 4: 新游戏 ===== */
+.dice-row { display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: middle; }
+.die { font-size: 30px; line-height: 1; color: var(--wine); }
+.dice-bid { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dice-bid label { display: flex; gap: 4px; align-items: center; font-size: 14px; }
+.dice-bid input, .dice-bid select { padding: 6px; font-family: var(--font); border: 1px solid var(--brown-light); border-radius: 4px; background: #fffaf0; width: 64px; }
+.dice-bid select { width: auto; }
+.guess-log { list-style: none; padding: 0; margin: 10px 0 0; }
+.guess-log li { display: flex; justify-content: space-between; gap: 8px; padding: 4px 6px; border-bottom: 1px dotted var(--brown-light); }
+.guess-log li.mine { background: var(--cream-dark); }
+.guess-log .digits { letter-spacing: 4px; font-size: 18px; }
+.mem-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; max-width: 360px; margin-inline: auto; }
+.mem-card { aspect-ratio: 1; font-size: 30px; border: 2px solid var(--gold); border-radius: 6px; background: var(--wine); color: var(--gold-light); font-family: var(--font); cursor: pointer; }
+.mem-card.open { background: #fffaf0; color: inherit; }
+.mem-card.done { background: var(--cream-dark); opacity: .7; }
+.mem-card:disabled { cursor: default; }

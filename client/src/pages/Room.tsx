@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { send } from '../socket';
 import type { GameInfo, RoomView } from '../types';
 import Undercover from '../games/Undercover';
@@ -9,6 +9,10 @@ import Cards from '../games/Cards';
 import Werewolf from '../games/Werewolf';
 import Detective from '../games/Detective';
 import Monopoly from '../games/Monopoly';
+import Pick from '../games/Pick';
+import DiceGame from '../games/Dice';
+import NumberGuess from '../games/NumberGuess';
+import Memory from '../games/Memory';
 import { useAct, type GameProps } from '../games/shared';
 
 const GAME_COMPONENTS: Record<string, (p: GameProps) => JSX.Element> = {
@@ -20,6 +24,11 @@ const GAME_COMPONENTS: Record<string, (p: GameProps) => JSX.Element> = {
   werewolf: Werewolf,
   detective: Detective,
   monopoly: Monopoly,
+  likely: Pick,
+  tacit: Pick,
+  dice: DiceGame,
+  number: NumberGuess,
+  memory: Memory,
 };
 const useActFn = useAct;
 

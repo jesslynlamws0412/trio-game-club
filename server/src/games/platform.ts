@@ -59,7 +59,10 @@ const MIN: Record<ModeId, number> = { solo: 1, duo: 2, trio: 3, party: 4 };
 const MAX: Record<ModeId, number> = { solo: 1, duo: 2, trio: 3, party: 8 };
 
 /** 已经实现（三人模式可玩）的游戏：id 必须与 catalog.ts 一致 */
-const LIVE = new Set(['undercover', 'draw', 'quiz', 'werewolf', 'monopoly', 'cards', 'turtlesoup', 'detective']);
+const LIVE = new Set([
+  'undercover', 'draw', 'quiz', 'werewolf', 'monopoly', 'cards', 'turtlesoup', 'detective',
+  'likely', 'tacit', 'dice', 'number', 'memory',
+]);
 
 function g(id: string, name: string, icon: string, category: string, codes: string): PlatformGame {
   const modes = [...codes].map((c) => CODE[c]);
@@ -125,24 +128,24 @@ export const PLATFORM_GAMES: PlatformGame[] = [
   g('p-cls-gomoku', '五子棋', '⚫', 'classic', 'SD'),
   g('p-cls-ttt', '井字棋', '❌', 'classic', 'SD'),
   g('p-cls-chess', '国际象棋', '♞', 'classic', 'SD'),
-  g('p-cls-memory', '记忆翻牌', '🃏', 'classic', 'SDTP'),
-  g('p-cls-dice', '骰子游戏', '🎲', 'classic', 'SDTP'),
+  g('memory', '记忆翻牌', '🃏', 'classic', 'SDTP'),
+  g('dice', '吹牛骰子', '🎲', 'classic', 'DTP'),
   g('p-cls-poker', '扑克牌小游戏', '♠️', 'classic', 'SDTP'),
   g('p-cls-slide', '数字华容道', '🔢', 'classic', 'S'),
-  g('p-cls-number', '猜数字', '🔟', 'classic', 'SDTP'),
+  g('number', '猜数字', '🔟', 'classic', 'SDTP'),
   g('p-cls-sudoku', '数独', '9️⃣', 'classic', 'S'),
   g('p-cls-reversi', '黑白棋', '⚪', 'classic', 'SD'),
   g('monopoly', '大富翁', '🏠', 'classic', 'T'),
   // E 聚会互动
   g('p-par-truth', '真心话大冒险', '💬', 'party', 'TP'),
   g('draw', '你画我猜', '🎨', 'party', 'DTP'),
-  g('p-par-likely', '谁最有可能', '👆', 'party', 'TP'),
+  g('likely', '谁最有可能', '👆', 'party', 'TP'),
   g('p-par-quick', '快问快答', '⚡', 'party', 'DTP'),
   g('p-par-taboo', '禁忌词挑战', '🚫', 'party', 'DTP'),
   g('p-par-story', '故事接龙', '📝', 'party', 'DTP'),
   g('p-par-roleplay', '角色扮演推理', '🎭', 'party', 'TP'),
   g('p-par-choice', '选择困难挑战', '🤔', 'party', 'DTP'),
-  g('p-par-tacit', '默契大考验', '💞', 'party', 'DTP'),
+  g('tacit', '默契大考验', '💞', 'party', 'DTP'),
   g('p-par-keyword', '关键词联想', '🔑', 'party', 'DTP'),
   g('cards', '抽卡游戏', '🎴', 'party', 'TP'),
   // F 反应与策略

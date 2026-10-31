@@ -7,6 +7,10 @@ import { CardsGame } from './cards.js';
 import { WerewolfGame } from './werewolf.js';
 import { DetectiveGame } from './detective.js';
 import { MonopolyGame } from './monopoly.js';
+import { PickGame } from './pick.js';
+import { DiceGame } from './dice.js';
+import { NumberGame } from './number.js';
+import { MemoryGame } from './memory.js';
 
 const factories: Record<string, (ctx: GameCtx) => GameEngine> = {
   undercover: (c) => new UndercoverGame(c),
@@ -17,6 +21,11 @@ const factories: Record<string, (ctx: GameCtx) => GameEngine> = {
   werewolf: (c) => new WerewolfGame(c),
   detective: (c) => new DetectiveGame(c),
   monopoly: (c) => new MonopolyGame(c),
+  likely: (c) => new PickGame(c, 'likely'),
+  tacit: (c) => new PickGame(c, 'tacit'),
+  dice: (c) => new DiceGame(c),
+  number: (c) => new NumberGame(c),
+  memory: (c) => new MemoryGame(c),
 };
 
 /** 返回 null 表示该游戏尚未实现 */
