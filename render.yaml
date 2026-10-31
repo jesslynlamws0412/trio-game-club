@@ -1,0 +1,13 @@
+# Render（render.com）一键部署配置：免费套餐，一个服务同时托管前端和后端。
+services:
+  - type: web
+    name: trio-game-club
+    runtime: node
+    plan: free
+    # --include=dev：构建前端需要 vite / typescript，它们属于开发依赖
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 22

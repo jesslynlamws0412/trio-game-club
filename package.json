@@ -1,0 +1,14 @@
+{
+  "name": "trio-game-club",
+  "private": true,
+  "version": "0.1.0",
+  "engines": { "node": ">=20" },
+  "workspaces": ["server", "client"],
+  "scripts": {
+    "dev:server": "npm run dev -w server",
+    "dev:client": "npm run dev -w client",
+    "build": "npm run build -w client",
+    "start": "npm run start -w server",
+    "typecheck": "npm run typecheck -w server && npm run typecheck -w client"
+  }
+}

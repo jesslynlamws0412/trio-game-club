@@ -1,0 +1,103 @@
+import { useState } from 'react';
+import { getDeviceId, loadProfile, saveProfile, saveSession, send } from '../socket';
+import Profile from './Profile';
+
+const AVATARS = ['🦊', '🐻', '🐱', '🐶', '🦉', '🐼', '🐸', '🦁', '🐰', '🐯', '🦄', '🐧'];
+
+export default function Home() {
+  const saved = loadProfile();
+  const [nickname, setNickname] = useState(saved?.nickname ?? '');
+  const [avatar, setAvatar] = useState(saved?.avatar ?? AVATARS[0]);
+  const [code, setCode] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+
+  const enter = async (mode: 'create' | 'join') => {
+    if (busy) return;
+    setError('');
+    if (!nickname.trim()) return setError('请先给自己起个昵称');
+    if (mode === 'join' && !/^\d{4}$/.test(code.trim())) return setError('请输入 4 位房间号');
+    setBusy(true);
+    saveProfile({ nickname: nickname.trim(), avatar });
+    const res = await send(mode === 'create' ? 'room:create' : 'room:join', {
+      nickname,
+      avatar,
+      code: code.trim(),
+      deviceId: getDeviceId(),
+    });
+    setBusy(false);
+    if (!res.ok) return setError(res.error);
+    saveSession({ code: res.code!, token: res.token! });
+  };
+
+  return (
+    <main className="home">
+      <header className="masthead">
+        <div className="ornament">❖ ❖ ❖</div>
+        <h1>三人游戏俱乐部</h1>
+        <div className="subtitle">TRIO GAME CLUB · est. 三人成局</div>
+      </header>
+
+      <section className="paper card">
+        <h2>入场登记</h2>
+        <label className="field">
+          <span>昵称</span>
+          <input
+            value={nickname}
+            maxLength={8}
+            placeholder="最多 8 个字"
+            onChange={(e) => setNickname(e.target.value)}
+          />
+        </label>
+        <div className="field">
+          <span>头像</span>
+          <div className="avatar-grid">
+            {AVATARS.map((a) => (
+              <button
+                key={a}
+                type="button"
+                className={'avatar-btn' + (a === avatar ? ' on' : '')}
+                onClick={() => setAvatar(a)}
+                aria-label={`头像 ${a}`}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="actions">
+          <button className="btn primary" disabled={busy} onClick={() => enter('create')}>
+            创建游戏房间
+          </button>
+        </div>
+
+        <div className="divider">或者</div>
+
+        <div className="join-row">
+          <input
+            className="code-input"
+            inputMode="numeric"
+            maxLength={4}
+            placeholder="房间号"
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+            onKeyDown={(e) => e.key === 'Enter' && enter('join')}
+          />
+          <button className="btn green" disabled={busy} onClick={() => enter('join')}>
+            加入房间
+          </button>
+        </div>
+
+        {error && <p className="error">{error}</p>}
+      </section>
+
+      <p className="footnote">
+        <button className="link-btn" onClick={() => setShowProfile(true)}>📜 我的战绩与积分榜</button>
+      </p>
+      <p className="footnote">每个房间限 3 位玩家 · 将房间号发给朋友即可联机</p>
+      {showProfile && <Profile onClose={() => setShowProfile(false)} />}
+    </main>
+  );
+}
