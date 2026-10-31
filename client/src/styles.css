@@ -283,3 +283,33 @@ img, canvas, svg { max-width: 100%; }
   .app { padding-left: 8px; padding-right: 8px; }
   .card { padding: 16px 12px; }
 }
+
+/* ===== Phase 2: 平台首页与游戏大厅 ===== */
+.hub { max-width: 760px; }
+.masthead.small { padding: 12px 0 8px; }
+.masthead.small h1 { font-size: 34px; }
+.mode-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+.mode-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 16px 10px; background: var(--cream); color: var(--brown); border: 3px double var(--gold); border-radius: 6px; font-family: var(--font); cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+.mode-card:active { transform: translateY(2px); }
+.mode-card.soon { background: var(--cream-dark); opacity: .85; }
+.mode-icon { font-size: 32px; }
+.mode-en { font-size: 20px; font-weight: 700; letter-spacing: 3px; color: var(--wine); }
+.mode-name { font-size: 14px; }
+.mode-desc { font-size: 12px; color: var(--brown-light); text-align: center; }
+.tag.live { background: var(--green); }
+.tag.wip { background: var(--brown-light); }
+.game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.game-tile { display: flex; flex-direction: column; align-items: center; padding: 8px 4px; border: 1px solid var(--brown-light); border-radius: 4px; background: #fffaf0; }
+.game-icon { font-size: 24px; }
+.game-name { font-size: 14px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 10px; }
+.tab { padding: 6px 14px; border: 2px solid var(--gold); background: transparent; color: var(--cream); font-family: var(--font); border-radius: 4px; cursor: pointer; }
+.tab.on { background: var(--gold); color: var(--brown); }
+.notice { color: var(--cream); background: rgba(0,0,0,.25); border: 1px dashed var(--gold); padding: 8px 10px; border-radius: 4px; font-size: 14px; }
+.check { display: block; color: var(--cream); margin: 8px 0; font-size: 14px; }
+.lobby-list { display: flex; flex-direction: column; gap: 6px; }
+.lobby-game { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-bottom: 1px dotted var(--brown-light); }
+.lobby-game.wip { opacity: .7; }
+.lg-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.lg-meta { font-size: 12px; color: var(--brown-light); }
+@media (min-width: 640px) { .mode-grid { grid-template-columns: repeat(4, 1fr); } }

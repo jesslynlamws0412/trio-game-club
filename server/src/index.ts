@@ -4,6 +4,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Server, type Socket } from 'socket.io';
+import { PLATFORM } from './games/platform.js';
 import { flushStore, getProfile, topPlayers, validDeviceId } from './store.js';
 import {
   RECONNECT_GRACE_MS,
@@ -30,6 +31,7 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: true }, maxHttpBufferSize: 100_000 });
 
 app.get('/healthz', (_req, res) => res.send('ok'));
+app.get('/api/platform', (_req, res) => res.json(PLATFORM));
 
 // 生产环境：同时托管前端打包文件
 const here = path.dirname(fileURLToPath(import.meta.url));

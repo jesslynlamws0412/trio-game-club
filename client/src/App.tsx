@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { loadSession, saveSession, send, socket } from './socket';
 import type { RoomView } from './types';
-import Home from './pages/Home';
+import Platform from './pages/Platform';
 import Room from './pages/Room';
 
 export default function App() {
@@ -48,7 +48,7 @@ export default function App() {
       ) : room ? (
         <Room room={room} onLeave={leave} />
       ) : (
-        <Home />
+        <Platform />
       )}
     </div>
   );

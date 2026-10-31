@@ -4,7 +4,7 @@ import Profile from './Profile';
 
 const AVATARS = ['🦊', '🐻', '🐱', '🐶', '🦉', '🐼', '🐸', '🦁', '🐰', '🐯', '🦄', '🐧'];
 
-export default function Home() {
+export default function Home({ onBack }: { onBack?: () => void }) {
   const saved = loadProfile();
   const [nickname, setNickname] = useState(saved?.nickname ?? '');
   const [avatar, setAvatar] = useState(saved?.avatar ?? AVATARS[0]);
@@ -96,6 +96,11 @@ export default function Home() {
       <p className="footnote">
         <button className="link-btn" onClick={() => setShowProfile(true)}>📜 我的战绩与积分榜</button>
       </p>
+      {onBack && (
+        <p className="footnote">
+          <button className="link-btn" onClick={onBack}>← 返回首页</button>
+        </p>
+      )}
       <p className="footnote">每个房间限 3 位玩家 · 将房间号发给朋友即可联机</p>
       {showProfile && <Profile onClose={() => setShowProfile(false)} />}
     </main>
