@@ -11,7 +11,7 @@ interface PGame {
 }
 interface PlatformData { modes: ModeInfo[]; categories: CategoryInfo[]; games: PGame[] }
 
-type View = { page: 'hub' } | { page: 'trio' } | { page: 'games'; mode: ModeId | 'all' };
+type View = { page: 'hub' } | { page: 'room'; mode: ModeId } | { page: 'games'; mode: ModeId | 'all' };
 
 function playersText(g: PGame) {
   return g.minPlayers === g.maxPlayers ? `${g.minPlayers} 人` : `${g.minPlayers}~${g.maxPlayers} 人`;
@@ -30,7 +30,7 @@ export default function Platform() {
       .catch(() => setFailed(true));
   }, []);
 
-  if (view.page === 'trio') return <Home onBack={() => setView({ page: 'hub' })} />;
+  if (view.page === 'room') return <Home mode={view.mode} onBack={() => setView({ page: 'hub' })} />;
 
   if (!data) {
     return <div className="center-msg">{failed ? '游戏大厅加载失败，请刷新页面重试' : '正在布置大厅……'}</div>;
@@ -43,7 +43,7 @@ export default function Platform() {
         mode={view.mode}
         onMode={(mode) => setView({ page: 'games', mode })}
         onBack={() => setView({ page: 'hub' })}
-        onTrio={() => setView({ page: 'trio' })}
+        onEnter={(m) => setView({ page: 'room', mode: m })}
       />
     );
   }
@@ -62,19 +62,19 @@ export default function Platform() {
           <button
             key={m.id}
             className={'mode-card' + (m.open ? '' : ' soon')}
-            onClick={() => setView(m.id === 'trio' ? { page: 'trio' } : { page: 'games', mode: m.id })}
+            onClick={() => setView({ page: 'room', mode: m.id })}
           >
             <span className="mode-icon">{m.icon}</span>
             <span className="mode-en">{m.en}</span>
             <span className="mode-name">{m.name}模式 · {m.players}</span>
             <span className="mode-desc">{m.desc}</span>
-            <span className={'tag ' + (m.open ? 'live' : 'wip')}>{m.open ? '可以游玩' : '开发中'}</span>
+            <span className="tag live">{data.games.filter((g) => g.liveModes.includes(m.id)).length} 款可玩</span>
           </button>
         ))}
       </section>
 
       <section className="paper card">
-        <h2>现在就能玩（三人联机）</h2>
+        <h2>现在就能玩</h2>
         <div className="game-grid">
           {live.map((g) => (
             <div key={g.id} className="game-tile">
@@ -84,7 +84,6 @@ export default function Platform() {
           ))}
         </div>
         <div className="actions">
-          <button className="btn primary" onClick={() => setView({ page: 'trio' })}>进入三人房间</button>
           <button className="btn" onClick={() => setView({ page: 'games', mode: 'all' })}>浏览游戏大厅</button>
         </div>
       </section>
@@ -98,8 +97,8 @@ export default function Platform() {
   );
 }
 
-function GameLobby({ data, mode, onMode, onBack, onTrio }: {
-  data: PlatformData; mode: ModeId | 'all'; onMode: (m: ModeId | 'all') => void; onBack: () => void; onTrio: () => void;
+function GameLobby({ data, mode, onMode, onBack, onEnter }: {
+  data: PlatformData; mode: ModeId | 'all'; onMode: (m: ModeId | 'all') => void; onBack: () => void; onEnter: (m: ModeId) => void;
 }) {
   const [liveOnly, setLiveOnly] = useState(false);
   const modeInfo = data.modes.find((m) => m.id === mode);
@@ -121,8 +120,13 @@ function GameLobby({ data, mode, onMode, onBack, onTrio }: {
         ))}
       </div>
 
-      {modeInfo && !modeInfo.open && (
-        <p className="notice">{modeInfo.name}模式的房间与对局还在开发中，下面是计划支持该模式的游戏，暂时不能开始。</p>
+      {modeInfo && (
+        <p className="notice">
+          {modeInfo.name}模式（{modeInfo.players}）：标“开发中”的游戏暂时不能开始。
+          <button className="btn small primary" style={{ marginLeft: 8 }} onClick={() => onEnter(modeInfo.id)}>
+            进入{modeInfo.name}房间
+          </button>
+        </p>
       )}
       <label className="check">
         <input type="checkbox" checked={liveOnly} onChange={(e) => setLiveOnly(e.target.checked)} /> 只看可游玩的
@@ -145,7 +149,13 @@ function GameLobby({ data, mode, onMode, onBack, onTrio }: {
                     </span>
                   </span>
                   {g.ready ? (
-                    <button className="btn small primary" onClick={onTrio}>三人房间</button>
+                    <span className="enter-btns">
+                      {g.liveModes.filter((m) => mode === 'all' || m === mode).map((m) => (
+                        <button key={m} className="btn small primary" onClick={() => onEnter(m)}>
+                          {data.modes.find((x) => x.id === m)!.name}
+                        </button>
+                      ))}
+                    </span>
                   ) : (
                     <span className="tag wip">开发中</span>
                   )}

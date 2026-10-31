@@ -1,4 +1,14 @@
-﻿export interface GameInfo {
+export type ModeId = 'solo' | 'duo' | 'trio' | 'party';
+
+/** 各模式的房间人数范围；三人模式固定 3 人（保持原有规则） */
+export const MODE_LIMITS: Record<ModeId, { min: number; max: number; label: string }> = {
+  solo: { min: 1, max: 1, label: '单人' },
+  duo: { min: 2, max: 2, label: '双人' },
+  trio: { min: 3, max: 3, label: '三人' },
+  party: { min: 4, max: 8, label: '多人' },
+};
+
+export interface GameInfo {
   id: string;
   name: string;
   icon: string;
@@ -6,9 +16,18 @@
   rules: string[];
   /** 该游戏是否已实现（未实现的只能查看规则，不能开始） */
   ready: boolean;
+  /** 该游戏能玩的人数模式 */
+  modes: ModeId[];
 }
 
-export const GAME_CATALOG: GameInfo[] = [
+/** 默认只支持三人；已适配其他人数的游戏在这里登记 */
+const MODES_BY_GAME: Record<string, ModeId[]> = {
+  quiz: ['solo', 'duo', 'trio', 'party'],
+  draw: ['duo', 'trio', 'party'],
+  turtlesoup: ['duo', 'trio', 'party'],
+};
+
+const BASE_CATALOG: Omit<GameInfo, 'modes'>[] = [
   {
     id: 'undercover',
     name: '谁是卧底',
@@ -26,11 +45,11 @@ export const GAME_CATALOG: GameInfo[] = [
     id: 'draw',
     name: '你画我猜',
     icon: '🎨',
-    tagline: '轮流作画，其余两人抢答',
+    tagline: '轮流作画，其余玩家抢答',
     ready: true,
     rules: [
-      '共 3 回合，三人轮流担任画家，画家只能看到题目。',
-      '画板支持画笔、橡皮、颜色、清空，画面实时同步给另外两人。',
+      '每人轮流担任一次画家（回合数 = 玩家人数），画家只能看到题目。',
+      '画板支持画笔、橡皮、颜色、清空，画面实时同步给其他玩家。',
       '猜词者在 60 秒内输入答案，越早猜对得分越高（3~1 分），画家每有人猜对 +1 分。',
     ],
   },
@@ -42,8 +61,8 @@ export const GAME_CATALOG: GameInfo[] = [
     ready: true,
     rules: [
       '共 10 题，含单选题与判断题，涵盖文学、历史、地理、文化、常识。',
-      '每题 15 秒，三人同时作答。答对得 10 分，并按答题速度加 0~5 分。',
-      '全部结束后显示排名：第一 +3、第二 +2、第三 +1 计入总积分。',
+      '每题 15 秒，所有人同时作答。答对得 10 分，并按答题速度加 0~5 分。',
+      '全部结束后显示排名：第一 +3、第二 +2、第三 +1 计入总积分（单人模式只与自己比，得 +3）。',
     ],
   },
   {
@@ -88,10 +107,10 @@ export const GAME_CATALOG: GameInfo[] = [
     id: 'turtlesoup',
     name: '海龟汤',
     icon: '🐢',
-    tagline: '主持人出题，两人是非题推理',
+    tagline: '主持人出题，其余玩家是非题推理',
     ready: true,
     rules: [
-      '一人担任主持人（每局轮换），另两人推理。主持人可从题库选题或自己输入汤面与汤底。',
+      '一人担任主持人（每局轮换），其余玩家推理（双人时 1 人主持、1 人推理）。主持人可从题库选题或自己输入汤面与汤底。',
       '推理者只能问是非题，主持人回答“是 / 不是 / 无关”。',
       '推理者可随时提交答案，猜中者 +3，主持人 +1。',
     ],
@@ -110,6 +129,8 @@ export const GAME_CATALOG: GameInfo[] = [
     ],
   },
 ];
+
+export const GAME_CATALOG: GameInfo[] = BASE_CATALOG.map((g) => ({ ...g, modes: MODES_BY_GAME[g.id] ?? ['trio'] }));
 
 export function findGame(id: string | null | undefined): GameInfo | undefined {
   return GAME_CATALOG.find((g) => g.id === id);

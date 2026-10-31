@@ -3,7 +3,9 @@
  * 与 catalog.ts 分离——catalog.ts 只描述“房间里能开始的游戏”（三人模式，保持不变），
  * 这里描述整个大厅要展示的游戏。liveModes 才是目前真正能玩的模式，其余都是规划。
  */
-export type ModeId = 'solo' | 'duo' | 'trio' | 'party';
+import { findGame, type ModeId } from './catalog.js';
+
+export type { ModeId };
 
 export interface ModeInfo {
   id: ModeId;
@@ -37,10 +39,10 @@ export interface PlatformGame {
 }
 
 export const MODES: ModeInfo[] = [
-  { id: 'solo', name: '单人', en: 'SOLO', icon: '🎯', players: '1 人', desc: '独自挑战、刷最高分', open: false },
-  { id: 'duo', name: '双人', en: 'DUO', icon: '🤝', players: '2 人', desc: '双人对战或合作', open: false },
+  { id: 'solo', name: '单人', en: 'SOLO', icon: '🎯', players: '1 人', desc: '独自挑战、刷最高分', open: true },
+  { id: 'duo', name: '双人', en: 'DUO', icon: '🤝', players: '2 人', desc: '双人对战或合作', open: true },
   { id: 'trio', name: '三人', en: 'TRIO', icon: '🎲', players: '3 人', desc: '经典三人联机，房间号邀请', open: true },
-  { id: 'party', name: '多人', en: 'PARTY', icon: '🎉', players: '4~8 人', desc: '聚会大房间', open: false },
+  { id: 'party', name: '多人', en: 'PARTY', icon: '🎉', players: '4~8 人', desc: '聚会大房间', open: true },
 ];
 
 export const CATEGORIES: CategoryInfo[] = [
@@ -68,7 +70,7 @@ function g(id: string, name: string, icon: string, category: string, codes: stri
     icon,
     category,
     modes,
-    liveModes: ready ? ['trio'] : [],
+    liveModes: ready ? (findGame(id)?.modes ?? ['trio']) : [],
     minPlayers: Math.min(...modes.map((m) => MIN[m])),
     maxPlayers: Math.max(...modes.map((m) => MAX[m])),
     ready,

@@ -12,6 +12,7 @@ import {
   endGame,
   getRoom,
   joinRoom,
+  kickPlayer,
   removePlayer,
   resumeRoom,
   setReady,
@@ -105,7 +106,7 @@ io.on('connection', (socket) => {
     broadcast(res.room);
   };
 
-  on('room:create', (data, ack) => joined(createRoom(data?.nickname, data?.avatar, data?.deviceId), ack));
+  on('room:create', (data, ack) => joined(createRoom(data?.nickname, data?.avatar, data?.deviceId, data?.mode), ack));
   on('room:join', (data, ack) => joined(joinRoom(data?.code, data?.nickname, data?.avatar, data?.deviceId), ack));
   on('room:resume', (data, ack) => joined(resumeRoom(data?.code, data?.token), ack));
   // 我的战绩 + 全服排行榜（只凭自己的 deviceId 查自己；排行榜不含任何身份凭证）
@@ -125,6 +126,23 @@ io.on('connection', (socket) => {
     });
   };
 
+  // 房主移出玩家：被移出的人收到 room:kicked，客户端据此回到首页
+  on('room:kick', (data, ack) => {
+    const c = ctx(socket);
+    if (!c) return reply(ack, { ok: false, error: '你不在任何房间中' });
+    const res = kickPlayer(c.room, c.player, data?.playerId);
+    reply(ack, res.ok ? { ok: true } : res);
+    if (!res.ok) return;
+    if (res.kicked.socketId) {
+      const s = io.sockets.sockets.get(res.kicked.socketId);
+      if (s) {
+        s.data.code = undefined;
+        s.data.playerId = undefined;
+      }
+      io.to(res.kicked.socketId).emit('room:kicked');
+    }
+    broadcast(c.room);
+  });
   act('room:profile', (r, p, d) => updateProfile(r, p, d?.nickname, d?.avatar));
   act('room:ready', (r, p, d) => setReady(r, p, d?.ready));
   act('room:vote', (r, p, d) => voteGame(r, p, d?.gameId));

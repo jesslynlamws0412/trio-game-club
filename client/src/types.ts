@@ -5,6 +5,7 @@ export interface GameInfo {
   tagline: string;
   rules: string[];
   ready: boolean;
+  modes: string[];
 }
 
 export interface PlayerView {
@@ -22,6 +23,8 @@ export interface RoomView {
   you: string;
   hostId: string;
   phase: 'lobby' | 'playing';
+  mode: 'solo' | 'duo' | 'trio' | 'party';
+  minPlayers: number;
   maxPlayers: number;
   currentGame: string | null;
   gamesPlayed: number;

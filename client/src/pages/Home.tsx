@@ -4,7 +4,14 @@ import Profile from './Profile';
 
 const AVATARS = ['🦊', '🐻', '🐱', '🐶', '🦉', '🐼', '🐸', '🦁', '🐰', '🐯', '🦄', '🐧'];
 
-export default function Home({ onBack }: { onBack?: () => void }) {
+const MODE_TEXT: Record<string, { label: string; limit: string }> = {
+  solo: { label: '单人', limit: '单人房间只有你自己，选好游戏即可开始' },
+  duo: { label: '双人', limit: '每个房间限 2 位玩家' },
+  trio: { label: '三人', limit: '每个房间限 3 位玩家' },
+  party: { label: '多人', limit: '每个房间 4~8 位玩家' },
+};
+
+export default function Home({ onBack, mode = 'trio' }: { onBack?: () => void; mode?: string }) {
   const saved = loadProfile();
   const [nickname, setNickname] = useState(saved?.nickname ?? '');
   const [avatar, setAvatar] = useState(saved?.avatar ?? AVATARS[0]);
@@ -13,18 +20,19 @@ export default function Home({ onBack }: { onBack?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
-  const enter = async (mode: 'create' | 'join') => {
+  const enter = async (action: 'create' | 'join') => {
     if (busy) return;
     setError('');
     if (!nickname.trim()) return setError('请先给自己起个昵称');
-    if (mode === 'join' && !/^\d{4}$/.test(code.trim())) return setError('请输入 4 位房间号');
+    if (action === 'join' &&!/^\d{4}$/.test(code.trim())) return setError('请输入 4 位房间号');
     setBusy(true);
     saveProfile({ nickname: nickname.trim(), avatar });
-    const res = await send(mode === 'create' ? 'room:create' : 'room:join', {
+    const res = await send(action === 'create' ? 'room:create' : 'room:join', {
       nickname,
       avatar,
       code: code.trim(),
       deviceId: getDeviceId(),
+      mode,
     });
     setBusy(false);
     if (!res.ok) return setError(res.error);
@@ -69,7 +77,7 @@ export default function Home({ onBack }: { onBack?: () => void }) {
 
         <div className="actions">
           <button className="btn primary" disabled={busy} onClick={() => enter('create')}>
-            创建游戏房间
+            创建{MODE_TEXT[mode].label}房间
           </button>
         </div>
 
@@ -101,7 +109,7 @@ export default function Home({ onBack }: { onBack?: () => void }) {
           <button className="link-btn" onClick={onBack}>← 返回首页</button>
         </p>
       )}
-      <p className="footnote">每个房间限 3 位玩家 · 将房间号发给朋友即可联机</p>
+      <p className="footnote">{MODE_TEXT[mode].limit}{mode !== 'solo' && ' · 将房间号发给朋友即可联机'}</p>
       {showProfile && <Profile onClose={() => setShowProfile(false)} />}
     </main>
   );

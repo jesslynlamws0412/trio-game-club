@@ -1,12 +1,11 @@
 import { randomUUID } from 'node:crypto';
-import { GAME_CATALOG, findGame } from './games/catalog.js';
+import { GAME_CATALOG, MODE_LIMITS, findGame, type ModeId } from './games/catalog.js';
 import { createEngine } from './games/index.js';
 import type { GameEngine, Result } from './games/types.js';
 import { recordGame, touchProfile, validDeviceId } from './store.js';
 
 export type { Result };
 
-export const MAX_PLAYERS = 3;
 const MAX_ROOMS = 300; // 公网部署时防止有人批量建房占满内存
 export const RECONNECT_GRACE_MS = 120_000;
 export const AVATARS = ['🦊', '🐻', '🐱', '🐶', '🦉', '🐼', '🐸', '🦁', '🐰', '🐯', '🦄', '🐧'];
@@ -27,6 +26,7 @@ export interface Player {
 
 export interface Room {
   code: string;
+  mode: ModeId;
   hostId: string;
   players: Player[];
   phase: 'lobby' | 'playing';
@@ -75,13 +75,20 @@ function newPlayer(nickname: string, avatar: string, deviceId: unknown): Player 
   };
 }
 
-export function createRoom(nickname: unknown, avatar: unknown, deviceId?: unknown): Result<{ room: Room; player: Player }> {
+export function createRoom(
+  nickname: unknown,
+  avatar: unknown,
+  deviceId?: unknown,
+  mode: unknown = 'trio', // 不传模式时沿用原来的三人房间
+): Result<{ room: Room; player: Player }> {
   const prof = cleanProfile(nickname, avatar);
   if (!prof.ok) return prof;
+  if (typeof mode !== 'string' || !(mode in MODE_LIMITS)) return { ok: false, error: '未知的游戏模式' };
   if (rooms.size >= MAX_ROOMS) return { ok: false, error: '服务器上的房间太多了，请稍后再试' };
   const player = newPlayer(prof.nickname, prof.avatar, deviceId);
   const room: Room = {
     code: genCode(),
+    mode: mode as ModeId,
     hostId: player.id,
     players: [player],
     phase: 'lobby',
@@ -105,7 +112,8 @@ export function joinRoom(
   const room = typeof code === 'string' ? rooms.get(code.trim()) : undefined;
   if (!room) return { ok: false, error: '房间不存在，请检查房间号' };
   if (room.phase !== 'lobby') return { ok: false, error: '游戏已经开始，无法加入' };
-  if (room.players.length >= MAX_PLAYERS) return { ok: false, error: '房间已满（最多 3 人）' };
+  const lim = MODE_LIMITS[room.mode];
+  if (room.players.length >= lim.max) return { ok: false, error: `房间已满（${lim.label}房间最多 ${lim.max} 人）` };
   if (room.players.some((p) => p.nickname === prof.nickname)) return { ok: false, error: '该昵称已被使用' };
   if (validDeviceId(deviceId) && room.players.some((p) => p.deviceId === deviceId)) {
     return { ok: false, error: '你已经在这个房间里了（可能在另一个标签页），请直接刷新页面回到房间' };
@@ -153,8 +161,10 @@ export function setReady(room: Room, player: Player, ready: unknown): Result {
 
 export function voteGame(room: Room, player: Player, gameId: unknown): Result {
   if (room.phase !== 'lobby') return { ok: false, error: '游戏进行中' };
-  if (typeof gameId !== 'string' || !findGame(gameId)) return { ok: false, error: '没有这个游戏' };
-  player.vote = gameId;
+  const game = typeof gameId === 'string' ? findGame(gameId) : undefined;
+  if (!game) return { ok: false, error: '没有这个游戏' };
+  if (!game.modes.includes(room.mode)) return { ok: false, error: `这个游戏不支持${MODE_LIMITS[room.mode].label}模式` };
+  player.vote = game.id;
   return { ok: true };
 }
 
@@ -173,7 +183,10 @@ export function resolveGame(room: Room): string | null {
 export function startGame(room: Room, player: Player, notify: () => void): Result {
   if (player.id !== room.hostId) return { ok: false, error: '只有房主可以开始游戏' };
   if (room.phase !== 'lobby') return { ok: false, error: '游戏已经开始' };
-  if (room.players.length < MAX_PLAYERS) return { ok: false, error: '需要 3 名玩家才能开始' };
+  const lim = MODE_LIMITS[room.mode];
+  if (room.players.length < lim.min) {
+    return { ok: false, error: lim.min === lim.max ? `需要 ${lim.min} 名玩家才能开始` : `至少需要 ${lim.min} 名玩家才能开始` };
+  }
   if (room.players.some((p) => !p.connected)) return { ok: false, error: '有玩家处于掉线状态' };
   if (room.players.some((p) => !p.ready)) return { ok: false, error: '还有玩家没有准备' };
   const gameId = resolveGame(room);
@@ -227,6 +240,17 @@ function deleteRoomIfEmpty(room: Room) {
   if (room.players.length === 0) rooms.delete(room.code);
 }
 
+/** 房主移出玩家（只能在大厅阶段）。 */
+export function kickPlayer(room: Room, host: Player, targetId: unknown): Result<{ kicked: Player }> {
+  if (host.id !== room.hostId) return { ok: false, error: '只有房主可以移出玩家' };
+  if (room.phase !== 'lobby') return { ok: false, error: '游戏进行中不能移出玩家' };
+  const target = room.players.find((p) => p.id === targetId);
+  if (!target) return { ok: false, error: '玩家不存在' };
+  if (target.id === host.id) return { ok: false, error: '不能移出自己' };
+  removePlayer(room, target);
+  return { ok: true, kicked: target };
+}
+
 /** 玩家永久离开（主动退出或掉线超时）。 */
 export function removePlayer(room: Room, player: Player) {
   if (player.graceTimer) clearTimeout(player.graceTimer);
@@ -238,7 +262,7 @@ export function removePlayer(room: Room, player: Player) {
     room.hostId = next.id;
   }
   if (room.phase === 'playing') {
-    // 人数不足 3 人，本局作废，回到大厅（不计分）
+    // 有人离开，本局作废，回到大厅（不计分）
     room.engine?.dispose();
     room.engine = null;
     room.phase = 'lobby';
@@ -256,7 +280,9 @@ export function viewFor(room: Room, viewer: Player) {
     you: viewer.id,
     hostId: room.hostId,
     phase: room.phase,
-    maxPlayers: MAX_PLAYERS,
+    mode: room.mode,
+    minPlayers: MODE_LIMITS[room.mode].min,
+    maxPlayers: MODE_LIMITS[room.mode].max,
     currentGame: room.currentGame,
     gamesPlayed: room.gamesPlayed,
     history: room.history.slice(-8).reverse(),
@@ -273,7 +299,7 @@ export function viewFor(room: Room, viewer: Player) {
       score: p.score,
       vote: p.vote,
     })),
-    catalog: GAME_CATALOG,
+    catalog: GAME_CATALOG.filter((g) => g.modes.includes(room.mode)),
     avatars: AVATARS,
   };
 }

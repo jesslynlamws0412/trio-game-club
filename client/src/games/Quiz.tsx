@@ -53,7 +53,7 @@ export default function Quiz({ room, view, act }: GameProps) {
       </div>
       {!revealing && (
         <p className="hint">
-          {answered ? '已提交，等待其他人……' : '越快答对，加分越多'}（已作答 {view.answered.length} / 3）
+          {answered ? '已提交，等待其他人……' : '越快答对，加分越多'}（已作答 {view.answered.length} / {room.players.length}）
         </p>
       )}
       {revealing && (

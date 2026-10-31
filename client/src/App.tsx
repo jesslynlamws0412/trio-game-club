@@ -23,11 +23,18 @@ export default function App() {
       setResuming(false);
     };
     const onDisconnect = () => setConnected(false);
+    const onKicked = () => {
+      saveSession(null);
+      setRoom(null);
+      alert('你已被房主移出房间');
+    };
+    socket.on('room:kicked', onKicked);
     socket.on('room:state', onState);
     socket.on('connect', tryResume);
     socket.on('disconnect', onDisconnect);
     if (socket.connected) tryResume();
     return () => {
+      socket.off('room:kicked', onKicked);
       socket.off('room:state', onState);
       socket.off('connect', tryResume);
       socket.off('disconnect', onDisconnect);

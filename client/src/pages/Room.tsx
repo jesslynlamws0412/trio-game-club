@@ -35,8 +35,9 @@ export default function Room({ room, onLeave }: Props) {
 
   const me = room.players.find((p) => p.id === room.you)!;
   const isHost = room.hostId === room.you;
-  const full = room.players.length === room.maxPlayers;
-  const allReady = full && room.players.every((p) => p.ready);
+  const enough = room.players.length >= room.minPlayers;
+  const allReady = enough && room.players.every((p) => p.ready);
+  const MODE_NAME = { solo: '单人', duo: '双人', trio: '三人', party: '多人' }[room.mode];
   const selected = room.catalog.find((g) => g.id === room.selectedGame) ?? null;
 
   const call = async (event: string, data?: unknown) => {
@@ -115,6 +116,14 @@ export default function Room({ room, onLeave }: Props) {
                 <span className={'p-state' + (p.ready ? ' ok' : '')}>
                   {!p.connected ? '掉线中' : p.ready ? '已准备' : '未准备'}
                 </span>
+                {isHost && p.id !== room.you && (
+                  <button
+                    className="btn ghost small"
+                    onClick={() => confirm(`确定把 ${p.nickname} 移出房间吗？`) && call('room:kick', { playerId: p.id })}
+                  >
+                    移出
+                  </button>
+                )}
               </li>
             ) : (
               <li key={'empty' + i} className="player empty">
@@ -124,7 +133,14 @@ export default function Room({ room, onLeave }: Props) {
             ),
           )}
         </ul>
-        {!full && <p className="hint">把房间号 <b>{room.code}</b> 发给朋友，满 3 人才能开始。</p>}
+        {!enough && (
+          <p className="hint">
+            把房间号 <b>{room.code}</b> 发给朋友，
+            {room.minPlayers === room.maxPlayers ? `满 ${room.minPlayers} 人` : `至少 ${room.minPlayers} 人（最多 ${room.maxPlayers} 人）`}
+            才能开始。
+          </p>
+        )}
+        <p className="hint">当前是 {MODE_NAME}模式房间。</p>
         <div className="actions row">
           <button className={'btn ' + (me.ready ? 'ghost' : 'green')} onClick={() => call('room:ready', { ready: !me.ready })}>
             {me.ready ? '取消准备' : '准备'}
