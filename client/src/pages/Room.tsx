@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { send } from '../socket';
+import { useEffect, useState } from 'react';
+import { request, send } from '../socket';
+import AvatarPicker from '../components/AvatarPicker';
 import type { GameInfo, RoomView } from '../types';
 import Undercover from '../games/Undercover';
 import Quiz from '../games/Quiz';
@@ -50,6 +51,7 @@ export default function Room({ room, onLeave }: Props) {
   const [error, setError] = useState('');
   const [rulesFor, setRulesFor] = useState<GameInfo | null>(null);
   const [editing, setEditing] = useState(false);
+  const [inviting, setInviting] = useState(false);
 
   const me = room.players.find((p) => p.id === room.you)!;
   const isHost = room.hostId === room.you;
@@ -166,6 +168,11 @@ export default function Room({ room, onLeave }: Props) {
           <button className="btn ghost" onClick={() => setEditing(true)}>
             修改资料
           </button>
+          {room.mode !== 'solo' && (
+            <button className="btn ghost" onClick={() => setInviting(true)}>
+              邀请好友
+            </button>
+          )}
         </div>
       </section>
 
@@ -293,6 +300,8 @@ export default function Room({ room, onLeave }: Props) {
         </div>
       )}
 
+      {inviting && <InviteModal onClose={() => setInviting(false)} />}
+
       {editing && (
         <ProfileEditor
           room={room}
@@ -323,13 +332,7 @@ function ProfileEditor({ room, me, onClose, onError }: { room: RoomView; me: { n
           <span>昵称</span>
           <input value={nickname} maxLength={8} onChange={(e) => setNickname(e.target.value)} />
         </label>
-        <div className="avatar-grid">
-          {room.avatars.map((a) => (
-            <button key={a} type="button" className={'avatar-btn' + (a === avatar ? ' on' : '')} onClick={() => setAvatar(a)}>
-              {a}
-            </button>
-          ))}
-        </div>
+        <AvatarPicker value={avatar} onChange={setAvatar} />
         {err && <p className="error">{err}</p>}
         <div className="actions row">
           <button className="btn primary" onClick={save}>保存</button>
@@ -340,3 +343,34 @@ function ProfileEditor({ room, me, onClose, onError }: { room: RoomView; me: { n
   );
 }
 
+
+function InviteModal({ onClose }: { onClose: () => void }) {
+  const [list, setList] = useState<any[] | null>(null);
+  const [msg, setMsg] = useState('');
+  useEffect(() => {
+    request('friends:list').then((r) => setList(r.ok ? r.friends : []));
+  }, []);
+  const invite = async (code: string, name: string) => {
+    const r = await request('friends:invite', { code });
+    setMsg(r.ok ? `已邀请 ${name}` : r.error);
+  };
+  return (
+    <div className="modal-back" onClick={onClose}>
+      <div className="modal paper" onClick={(e) => e.stopPropagation()}>
+        <h2>邀请好友</h2>
+        {!list && <p className="hint">读取中……</p>}
+        {list && list.length === 0 && <p className="hint">你还没有好友。在首页的“个人中心 → 好友”里用玩家 ID 添加好友，之后就能在这里邀请他们了。你也可以直接把房间号发给朋友。</p>}
+        <ul className="awards">
+          {list?.map((f) => (
+            <li key={f.code}>
+              <span>{f.online ? '🟢' : '⚪'} {f.avatar} {f.nickname}</span>
+              <button className="btn small green" disabled={!f.online} onClick={() => invite(f.code, f.nickname)}>{f.online ? '邀请' : '离线'}</button>
+            </li>
+          ))}
+        </ul>
+        {msg && <p className="hint">{msg}</p>}
+        <button className="btn primary" onClick={onClose}>关闭</button>
+      </div>
+    </div>
+  );
+}

@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { getDeviceId, loadProfile, saveProfile, saveSession, send } from '../socket';
-import Profile from './Profile';
-
-const AVATARS = ['🦊', '🐻', '🐱', '🐶', '🦉', '🐼', '🐸', '🦁', '🐰', '🐯', '🦄', '🐧'];
+import AvatarPicker from '../components/AvatarPicker';
 
 const MODE_TEXT: Record<string, { label: string; limit: string }> = {
   solo: { label: '单人', limit: '单人房间只有你自己，选好游戏即可开始' },
@@ -11,14 +9,13 @@ const MODE_TEXT: Record<string, { label: string; limit: string }> = {
   party: { label: '多人', limit: '每个房间 4~8 位玩家' },
 };
 
-export default function Home({ onBack, mode = 'trio' }: { onBack?: () => void; mode?: string }) {
+export default function Home({ onBack, mode = 'trio', preGame }: { onBack?: () => void; mode?: string; preGame?: string }) {
   const saved = loadProfile();
   const [nickname, setNickname] = useState(saved?.nickname ?? '');
-  const [avatar, setAvatar] = useState(saved?.avatar ?? AVATARS[0]);
+  const [avatar, setAvatar] = useState(saved?.avatar ?? '🦊');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
 
   const enter = async (action: 'create' | 'join') => {
     if (busy) return;
@@ -37,6 +34,8 @@ export default function Home({ onBack, mode = 'trio' }: { onBack?: () => void; m
     setBusy(false);
     if (!res.ok) return setError(res.error);
     saveSession({ code: res.code!, token: res.token! });
+    // 从游戏记录“再来一局”进来的：创建房间后直接投票选好那款游戏
+    if (action === 'create' && preGame) await send('room:vote', { gameId: preGame });
   };
 
   return (
@@ -60,19 +59,7 @@ export default function Home({ onBack, mode = 'trio' }: { onBack?: () => void; m
         </label>
         <div className="field">
           <span>头像</span>
-          <div className="avatar-grid">
-            {AVATARS.map((a) => (
-              <button
-                key={a}
-                type="button"
-                className={'avatar-btn' + (a === avatar ? ' on' : '')}
-                onClick={() => setAvatar(a)}
-                aria-label={`头像 ${a}`}
-              >
-                {a}
-              </button>
-            ))}
-          </div>
+          <AvatarPicker value={avatar} onChange={setAvatar} />
         </div>
 
         <div className="actions">
@@ -101,16 +88,12 @@ export default function Home({ onBack, mode = 'trio' }: { onBack?: () => void; m
         {error && <p className="error">{error}</p>}
       </section>
 
-      <p className="footnote">
-        <button className="link-btn" onClick={() => setShowProfile(true)}>📜 我的战绩与积分榜</button>
-      </p>
       {onBack && (
         <p className="footnote">
           <button className="link-btn" onClick={onBack}>← 返回首页</button>
         </p>
       )}
       <p className="footnote">{MODE_TEXT[mode].limit}{mode !== 'solo' && ' · 将房间号发给朋友即可联机'}</p>
-      {showProfile && <Profile onClose={() => setShowProfile(false)} />}
     </main>
   );
 }

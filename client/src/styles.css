@@ -354,3 +354,31 @@ img, canvas, svg { max-width: 100%; }
 .bank-row { width: 100%; background: none; border: none; border-bottom: 1px dotted var(--brown-light); text-align: left; font-family: var(--font); color: inherit; cursor: pointer; }
 .opt-edit { display: flex; gap: 6px; align-items: center; margin: 4px 0; }
 .opt-edit input[type='text'], .opt-edit input:not([type]) { flex: 1; }
+
+/* ===== Phase 6: 玩家系统 ===== */
+.stat-head { display: flex; align-items: center; gap: 12px; }
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; }
+.stat { display: flex; flex-direction: column; align-items: center; padding: 8px 2px; border: 1px solid var(--brown-light); border-radius: 4px; background: #fffaf0; }
+.stat b { font-size: 20px; color: var(--wine); }
+.stat span { font-size: 11px; color: var(--brown-light); }
+.pid { letter-spacing: 3px; color: var(--wine); }
+.edit-box { margin: 10px 0; padding: 10px; border: 1px dashed var(--brown-light); border-radius: 6px; }
+.custom-avatar { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 14px; }
+.custom-avatar input { flex: 1; padding: 6px; font-size: 18px; border: 1px solid var(--brown-light); border-radius: 4px; background: #fffaf0; }
+.ach-list { list-style: none; padding: 0; margin: 0; }
+.ach-list li { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px dotted var(--brown-light); opacity: .75; }
+.ach-list li.got { opacity: 1; }
+.ach-icon { font-size: 32px; width: 40px; text-align: center; }
+.ach-body { flex: 1; min-width: 0; }
+.bar { position: relative; height: 14px; background: var(--cream-dark); border-radius: 7px; margin-top: 4px; overflow: hidden; }
+.bar > div { height: 100%; background: var(--gold); }
+.bar > span { position: absolute; inset: 0; text-align: center; font-size: 11px; line-height: 14px; }
+.me-row { background: var(--cream-dark); }
+.rec-p { display: inline-block; margin-right: 10px; font-size: 13px; }
+.rec-p.me { font-weight: 700; color: var(--wine); }
+.invite-bar { position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--gold); color: var(--brown); border-bottom: 3px solid var(--brown); }
+.invite-actions { display: flex; gap: 6px; }
+.invite-msg { width: 100%; font-size: 13px; color: var(--wine); }
+.toasts { position: fixed; right: 10px; top: 10px; z-index: 40; display: flex; flex-direction: column; gap: 6px; max-width: 300px; }
+.toast { background: var(--cream); border: 3px double var(--gold); border-radius: 6px; padding: 8px 10px; box-shadow: 0 3px 0 rgba(0,0,0,.4); color: var(--brown); }
+@media (max-width: 480px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }

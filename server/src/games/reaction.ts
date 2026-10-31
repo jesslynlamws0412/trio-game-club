@@ -112,6 +112,10 @@ export class ReactionGame implements GameEngine {
     return this.phase === 'over';
   }
 
+  rawScores(): Record<string, number> {
+    return Object.fromEntries(this.ids.map((id) => [id, this.points[id]]));
+  }
+
   scores(): Record<string, number> {
     return Object.fromEntries(rankPoints(this.points, this.ids).map((r) => [r.id, r.bonus]));
   }

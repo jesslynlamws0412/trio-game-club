@@ -153,6 +153,10 @@ export class IdiomGame implements GameEngine {
     return this.phase === 'over';
   }
 
+  rawScores(): Record<string, number> {
+    return Object.fromEntries(this.ids.map((id) => [id, this.points[id]]));
+  }
+
   scores(): Record<string, number> {
     const s: Record<string, number> = {};
     for (const r of this.rank()) s[r.id] = [3, 2, 1][r.rank - 1] ?? 0;

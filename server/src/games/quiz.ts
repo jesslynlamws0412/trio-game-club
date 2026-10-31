@@ -169,6 +169,10 @@ export class QuizGame implements GameEngine {
     return this.phase === 'over';
   }
 
+  rawScores(): Record<string, number> {
+    return Object.fromEntries(this.ids.map((id) => [id, this.points[id]]));
+  }
+
   scores(): Record<string, number> {
     return Object.fromEntries(this.ranking().map((r) => [r.id, r.bonus]));
   }

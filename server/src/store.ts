@@ -6,6 +6,8 @@ import type { Question } from './bank/types.js';
 import { MAX_BANKS_PER_PLAYER, MAX_QUESTIONS_PER_BANK, MIN_QUESTIONS_TO_PLAY, validateQuestion, type Visibility } from './bank/custom.js';
 import { BUILTIN, getBuiltin } from './bank/index.js';
 import type { AnswerEntry } from './games/types.js';
+import { ACHIEVEMENT_BY_ID, achievementView, unlockNew, type AchievementDef } from './achievements.js';
+import { PLATFORM_GAMES } from './games/platform.js';
 
 /**
  * 玩家资料与游戏记录的持久化（一个 JSON 文件，无需数据库）。
@@ -15,6 +17,8 @@ export interface GameStat {
   played: number;
   wins: number;
   points: number;
+  /** 单局最高得分（游戏内原始得分） */
+  best?: number;
 }
 export interface QuizStats {
   answered: number;
@@ -35,6 +39,8 @@ export interface CustomBank {
 }
 export interface Profile {
   deviceId: string;
+  /** 公开的玩家 ID（6 位），用来加好友；和 deviceId 不同，deviceId 永远不外传 */
+  code: string;
   nickname: string;
   avatar: string;
   totalScore: number;
@@ -43,6 +49,14 @@ export interface Profile {
   perGame: Record<string, GameStat>;
   /** 题库答题统计（累计） */
   quiz?: QuizStats;
+  friends?: string[]; // 好友的 deviceId
+  achievements?: Record<string, number>; // 成就 id -> 解锁时间
+  perMode?: Record<string, { played: number; wins: number }>;
+  /** 有胜负可言的局数（单人练习不算） */
+  contested?: number;
+  winStreak?: number;
+  bestWinStreak?: number;
+  bestScore?: number;
   createdAt: number;
   lastPlayed: number | null;
 }
@@ -50,22 +64,26 @@ export interface RecordPlayer {
   deviceId: string | null;
   nickname: string;
   avatar: string;
-  points: number;
+  points: number; // 名次奖励积分
   rank: number;
+  raw?: number; // 游戏内原始得分
 }
 export interface GameRecord {
   id: string;
   at: number;
   roomCode: string;
   game: string;
+  mode?: string;
+  duration?: number; // 毫秒
   players: RecordPlayer[];
 }
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const DIR = process.env.DATA_DIR ?? path.resolve(here, '../storage');
 const FILE = path.join(DIR, 'store.json');
-const MAX_RECORDS = 500;
+const MAX_RECORDS = 5000;
 
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 去掉容易看错的 0 O 1 I
 let profiles: Record<string, Profile> = {};
 let records: GameRecord[] = [];
 let customBanks: Record<string, CustomBank> = {};
@@ -76,6 +94,7 @@ function load() {
   try {
     const raw = JSON.parse(fs.readFileSync(FILE, 'utf8'));
     profiles = raw.profiles ?? {};
+    for (const p of Object.values(profiles) as Profile[]) if (!p.code) p.code = newCode();
     records = raw.records ?? [];
     customBanks = raw.customBanks ?? {};
     favorites = raw.favorites ?? {};
@@ -87,6 +106,15 @@ function load() {
   }
 }
 load();
+
+function newCode(): string {
+  const used = new Set(Object.values(profiles).map((p) => p.code));
+  let c: string;
+  do {
+    c = Array.from({ length: 6 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
+  } while (used.has(c));
+  return c;
+}
 
 function writeNow() {
   timer = null;
@@ -122,14 +150,32 @@ export function touchProfile(deviceId: string | null, nickname: string, avatar: 
     p.avatar = avatar;
   } else {
     profiles[deviceId] = {
-      deviceId, nickname, avatar, totalScore: 0, played: 0, wins: 0, perGame: {}, createdAt: Date.now(), lastPlayed: null,
+      deviceId, code: newCode(), nickname, avatar, totalScore: 0, played: 0, wins: 0, perGame: {}, createdAt: Date.now(), lastPlayed: null,
     };
   }
   scheduleSave();
 }
 
 /** 记录一局游戏：按得分排名（同分并列），第 1 名且得分 > 0 算获胜。 */
-export function recordGame(roomCode: string, game: string, players: Omit<RecordPlayer, 'rank'>[]): GameRecord {
+let achievementListener: ((deviceId: string, fresh: AchievementDef[]) => void) | null = null;
+/** 玩家解锁新成就时通知（由 index.ts 注册，用来给在线玩家弹提示） */
+export function setAchievementListener(fn: (deviceId: string, fresh: AchievementDef[]) => void) {
+  achievementListener = fn;
+}
+
+/**
+ * 单人模式一般没有“输赢”，只有这些游戏的单人局有明确的胜负：
+ * 剪刀石头布（对电脑）和猜数字（猜中算赢）。
+ */
+const SOLO_HAS_RESULT = new Set(['rps', 'number']);
+
+export function recordGame(
+  roomCode: string,
+  game: string,
+  mode: string,
+  duration: number,
+  players: Omit<RecordPlayer, 'rank'>[],
+): GameRecord {
   const sorted = [...players].sort((a, b) => b.points - a.points);
   const ranked: RecordPlayer[] = sorted.map((p, i) => {
     const rank = i > 0 && p.points === sorted[i - 1].points ? 0 : i + 1;
@@ -137,40 +183,204 @@ export function recordGame(roomCode: string, game: string, players: Omit<RecordP
   });
   // 并列时沿用前一名的名次
   for (let i = 1; i < ranked.length; i++) if (ranked[i].rank === 0) ranked[i].rank = ranked[i - 1].rank;
-  const rec: GameRecord = { id: randomUUID().slice(0, 8), at: Date.now(), roomCode, game, players: ranked };
+  const rec: GameRecord = { id: randomUUID().slice(0, 8), at: Date.now(), roomCode, game, mode, duration, players: ranked };
   records.push(rec);
   if (records.length > MAX_RECORDS) records.splice(0, records.length - MAX_RECORDS);
   for (const r of ranked) {
     const p = r.deviceId ? profiles[r.deviceId] : null;
     if (!p) continue;
-    const win = r.rank === 1 && r.points > 0;
+    const solo = mode === 'solo';
+    // 有胜负的局：多人按名次；单人只有部分游戏有明确输赢（拿满 3 分才算赢）
+    const hasResult = !solo || SOLO_HAS_RESULT.has(game);
+    const win = hasResult && (solo ? r.points >= 3 : r.rank === 1 && r.points > 0);
     const g = (p.perGame[game] ??= { played: 0, wins: 0, points: 0 });
+    const m = ((p.perMode ??= {})[mode] ??= { played: 0, wins: 0 });
     p.totalScore += r.points;
     p.played++;
     g.played++;
+    m.played++;
     g.points += r.points;
-    if (win) {
-      p.wins++;
-      g.wins++;
+    if (hasResult) {
+      p.contested = (p.contested ?? 0) + 1;
+      if (win) {
+        p.wins++;
+        g.wins++;
+        m.wins++;
+        p.winStreak = (p.winStreak ?? 0) + 1;
+        p.bestWinStreak = Math.max(p.bestWinStreak ?? 0, p.winStreak);
+      } else {
+        p.winStreak = 0;
+      }
+    }
+    if (typeof r.raw === 'number') {
+      g.best = Math.max(g.best ?? r.raw, r.raw);
+      p.bestScore = Math.max(p.bestScore ?? r.raw, r.raw);
     }
     p.lastPlayed = rec.at;
+    const fresh = unlockNew(p, rec.at);
+    if (fresh.length && achievementListener) achievementListener(p.deviceId, fresh);
   }
   scheduleSave();
   return rec;
+}
+
+/** 发给客户端的记录：不带任何人的 deviceId */
+function safeRecord(r: GameRecord, deviceId: string) {
+  return {
+    id: r.id,
+    at: r.at,
+    roomCode: r.roomCode,
+    game: r.game,
+    mode: r.mode ?? 'trio',
+    duration: r.duration ?? null,
+    players: r.players.map((p) => ({ nickname: p.nickname, avatar: p.avatar, points: p.points, rank: p.rank, raw: p.raw ?? null, me: p.deviceId === deviceId })),
+  };
 }
 
 export function getProfile(deviceId: string) {
   const profile = profiles[deviceId];
   if (!profile) return null;
   const mine = records.filter((r) => r.players.some((p) => p.deviceId === deviceId)).slice(-15).reverse();
-  // 发给客户端的记录里不带别人的 deviceId
-  const safe = mine.map((r) => ({
-    ...r,
-    players: r.players.map((p) => ({ nickname: p.nickname, avatar: p.avatar, points: p.points, rank: p.rank, me: p.deviceId === deviceId })),
-  }));
-  return { profile, records: safe };
+  // 好友列表里是别人的 deviceId，不外传
+  return { profile: { ...profile, friends: undefined }, records: mine.map((r) => safeRecord(r, deviceId)) };
 }
 
+/** 个人中心：资料、统计、成就 */
+export function getMe(deviceId: string) {
+  const p = profiles[deviceId];
+  if (!p) return null;
+  // 旧版数据（还没有 perMode / contested 统计）把每一局都算作有胜负的局
+  const contested = p.contested ?? (p.perMode ? 0 : p.played);
+  const fav = Object.entries(p.perGame).sort((a, b) => b[1].played - a[1].played)[0];
+  return {
+    code: p.code,
+    nickname: p.nickname,
+    avatar: p.avatar,
+    played: p.played,
+    wins: p.wins,
+    contested,
+    losses: Math.max(0, contested - p.wins),
+    winRate: contested ? Math.round((p.wins / contested) * 100) : 0,
+    totalScore: p.totalScore,
+    bestScore: p.bestScore ?? null,
+    winStreak: p.winStreak ?? 0,
+    bestWinStreak: p.bestWinStreak ?? 0,
+    favoriteGame: fav ? { id: fav[0], played: fav[1].played } : null,
+    perMode: p.perMode ?? {},
+    perGame: p.perGame,
+    quiz: p.quiz ?? null,
+    achievements: achievementView(p),
+    friendCount: (p.friends ?? []).length,
+    createdAt: p.createdAt,
+  };
+}
+
+/** 我的游戏记录（最近 limit 条） */
+export function myRecords(deviceId: string, limit = 50) {
+  return records
+    .filter((r) => r.players.some((p) => p.deviceId === deviceId))
+    .slice(-limit)
+    .reverse()
+    .map((r) => safeRecord(r, deviceId));
+}
+
+/** 用公开的玩家 ID 找 deviceId（仅服务器内部使用） */
+export function deviceByCode(code: unknown): string | null {
+  if (typeof code !== 'string') return null;
+  const c = code.trim().toUpperCase();
+  return Object.values(profiles).find((p) => p.code === c)?.deviceId ?? null;
+}
+
+const publicPlayer = (p: Profile) => ({ code: p.code, nickname: p.nickname, avatar: p.avatar, played: p.played, wins: p.wins, totalScore: p.totalScore });
+
+export function addFriend(deviceId: string, code: unknown): R<{ friend: ReturnType<typeof publicPlayer> }> {
+  const me = profiles[deviceId];
+  if (!me) return { ok: false, error: '请先完成一局游戏或创建房间后再加好友' };
+  const other = deviceByCode(code);
+  if (!other) return { ok: false, error: '找不到这个玩家 ID，请检查是否输入正确' };
+  if (other === deviceId) return { ok: false, error: '不能添加自己为好友' };
+  const list = (me.friends ??= []);
+  if (list.includes(other)) return { ok: false, error: '已经是好友了' };
+  if (list.length >= 100) return { ok: false, error: '好友数量已达上限（100 人）' };
+  list.push(other);
+  scheduleSave();
+  return { ok: true, friend: publicPlayer(profiles[other]) };
+}
+
+export function removeFriend(deviceId: string, code: unknown): R {
+  const me = profiles[deviceId];
+  const other = deviceByCode(code);
+  if (!me || !other || !me.friends?.includes(other)) return { ok: false, error: '他不在你的好友列表里' };
+  me.friends = me.friends.filter((d) => d !== other);
+  scheduleSave();
+  return { ok: true };
+}
+
+export function isFriend(deviceId: string, otherDevice: string): boolean {
+  return !!profiles[deviceId]?.friends?.includes(otherDevice);
+}
+
+/** 好友列表 + 最近一起玩过的人 */
+export function friendsAndRecent(deviceId: string, isOnline: (d: string) => boolean) {
+  const me = profiles[deviceId];
+  if (!me) return { friends: [], recent: [] };
+  const friends = (me.friends ?? []).map((d) => profiles[d]).filter(Boolean).map((p) => ({ ...publicPlayer(p), online: isOnline(p.deviceId) }));
+  const seen = new Map<string, { at: number; count: number }>();
+  for (const r of records) {
+    if (!r.players.some((p) => p.deviceId === deviceId)) continue;
+    for (const p of r.players) {
+      if (!p.deviceId || p.deviceId === deviceId) continue;
+      const cur = seen.get(p.deviceId);
+      seen.set(p.deviceId, { at: Math.max(cur?.at ?? 0, r.at), count: (cur?.count ?? 0) + 1 });
+    }
+  }
+  const recent = [...seen.entries()]
+    .filter(([d]) => profiles[d])
+    .sort((a, b) => b[1].at - a[1].at)
+    .slice(0, 20)
+    .map(([d, v]) => ({ ...publicPlayer(profiles[d]), lastAt: v.at, count: v.count, isFriend: !!me.friends?.includes(d), online: isOnline(d) }));
+  return { friends, recent };
+}
+
+export type BoardScope = 'all' | 'week' | 'month' | 'friends';
+const DAY = 24 * 3600 * 1000;
+
+/**
+ * 排行榜。总榜/好友榜按累计积分；周榜、月榜按最近 7 / 30 天的积分；
+ * category 可以限定游戏大类（只统计该类游戏的积分）。
+ */
+export function leaderboard(deviceId: string | null, scope: BoardScope, category: string) {
+  const since = scope === 'week' ? Date.now() - 7 * DAY : scope === 'month' ? Date.now() - 30 * DAY : 0;
+  const allowed = category === 'all' ? null : new Set(PLATFORM_GAMES.filter((g) => g.category === category).map((g) => g.id));
+  const friendSet = scope === 'friends' && deviceId ? new Set([deviceId, ...(profiles[deviceId]?.friends ?? [])]) : null;
+  if (scope === 'friends' && !friendSet) return [];
+  const agg = new Map<string, { points: number; played: number; wins: number }>();
+  for (const r of records) {
+    if (r.at < since || (allowed && !allowed.has(r.game))) continue;
+    for (const p of r.players) {
+      if (!p.deviceId || !profiles[p.deviceId]) continue;
+      if (friendSet && !friendSet.has(p.deviceId)) continue;
+      const a = agg.get(p.deviceId) ?? { points: 0, played: 0, wins: 0 };
+      a.points += p.points;
+      a.played++;
+      if (p.rank === 1 && p.points > 0) a.wins++;
+      agg.set(p.deviceId, a);
+    }
+  }
+  return [...agg.entries()]
+    .sort((a, b) => b[1].points - a[1].points || b[1].wins - a[1].wins || b[1].played - a[1].played)
+    .slice(0, 20)
+    .map(([d, a], i) => ({ rank: i + 1, nickname: profiles[d].nickname, avatar: profiles[d].avatar, code: profiles[d].code, ...a, me: d === deviceId }));
+}
+
+/** 某个游戏的“历史最高分”榜（单局原始得分） */
+export function bestScores(deviceId: string | null, game: string) {
+  return Object.values(profiles)
+    .filter((p) => (p.perGame[game]?.best ?? null) !== null)
+    .sort((a, b) => b.perGame[game].best! - a.perGame[game].best!)
+    .slice(0, 10)
+    .map((p, i) => ({ rank: i + 1, nickname: p.nickname, avatar: p.avatar, best: p.perGame[game].best!, me: p.deviceId === deviceId }));
+}
 export function topPlayers(n = 10) {
   return Object.values(profiles)
     .filter((p) => p.played > 0)

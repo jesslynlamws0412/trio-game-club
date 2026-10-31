@@ -170,12 +170,15 @@ async function playQuiz(list, policy) {
 {
   // 全类型覆盖：反复玩“成语知识问答”“逻辑推理”“脑筋急转弯”等，答题格式全部走一遍
   const typesSeen = new Set();
-  for (const gameId of ['q-idiom', 'q-sci', 'q-poem', 'q-logic', 'q-brain', 'q-mylit']) {
-    const list = await startRoom('duo', 2, gameId);
-    const seen = await playQuiz(list, { right: (i) => i === 0 });
-    for (const q of seen) typesSeen.add(q.type);
-    await emit(list[0], 'game:end');
-    await leaveAll();
+  // 题型是随机抽到的，所以多玩几轮，直到填空、多选、看图三种都见过（最多 4 轮）
+  for (let round = 0; round < 4 && !['fill', 'multi', 'image'].every((x) => typesSeen.has(x)); round++) {
+    for (const gameId of ['q-idiom', 'q-sci', 'q-poem', 'q-logic', 'q-brain', 'q-mylit']) {
+      const list = await startRoom('duo', 2, gameId);
+      const seen = await playQuiz(list, { right: (i) => i === 0 });
+      for (const q of seen) typesSeen.add(q.type);
+      await emit(list[0], 'game:end');
+      await leaveAll();
+    }
   }
   assert.ok(typesSeen.has('fill') && typesSeen.has('multi') && typesSeen.has('image'));
   ok(`多种题型（${[...typesSeen].join('、')}）都能正常作答和判题`);

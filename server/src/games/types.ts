@@ -45,6 +45,8 @@ export interface GameEngine {
   isOver(): boolean;
   /** 本局获得的积分（结束后才有意义） */
   scores(): Record<string, number>;
+  /** 游戏内的原始得分（用于最高得分记录）；没有实现的游戏用名次积分代替 */
+  rawScores?(): Record<string, number>;
   /** 题库类游戏：本局每位玩家的答题情况，用于累计答题统计 */
   answerLog?(): AnswerEntry[];
   dispose(): void;

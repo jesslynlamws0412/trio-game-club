@@ -8,7 +8,20 @@ export type { Result };
 
 const MAX_ROOMS = 300; // 公网部署时防止有人批量建房占满内存
 export const RECONNECT_GRACE_MS = 120_000;
-export const AVATARS = ['🦊', '🐻', '🐱', '🐶', '🦉', '🐼', '🐸', '🦁', '🐰', '🐯', '🦄', '🐧'];
+export const AVATARS = [
+  '🦊', '🐻', '🐱', '🐶', '🦉', '🐼', '🐸', '🦁', '🐰', '🐯', '🦄', '🐧',
+  '🐵', '🐨', '🐮', '🐷', '🐔', '🐙', '🦋', '🐢', '🐬', '🦖', '🐲', '🦈',
+  '🌸', '🌻', '🍀', '🌈', '⭐', '🔥', '🎩', '🎲', '🎯', '🎸', '🚀', '👑',
+];
+
+/** 自定义头像：允许玩家输入一个表情符号（最多 2 个字符簇），只接受表情，不接受文字 */
+export function validAvatar(v: unknown): v is string {
+  if (typeof v !== 'string') return false;
+  if (AVATARS.includes(v)) return true;
+  if (v.length < 1 || v.length > 16) return false;
+  const parts = [...new Intl.Segmenter('zh', { granularity: 'grapheme' }).segment(v)];
+  return parts.length >= 1 && parts.length <= 2 && parts.every((s) => /\p{Extended_Pictographic}/u.test(s.segment));
+}
 
 export interface Player {
   id: string;
@@ -38,6 +51,8 @@ export interface Room {
   settings: RoomSettings;
   /** 本房间已出过的题库题目，连续玩时尽量不重复 */
   usedQuestions: Set<string>;
+  /** 当前这局开始的时间，用来记录游戏时长 */
+  gameStartedAt: number;
 }
 
 const rooms = new Map<string, Room>();
@@ -57,7 +72,7 @@ function genCode(): string {
 function cleanProfile(nickname: unknown, avatar: unknown): Result<{ nickname: string; avatar: string }> {
   const nick = typeof nickname === 'string' ? nickname.trim() : '';
   if (nick.length < 1 || nick.length > 8) return { ok: false, error: '昵称需要 1~8 个字' };
-  if (typeof avatar !== 'string' || !AVATARS.includes(avatar)) return { ok: false, error: '请选择头像' };
+  if (!validAvatar(avatar)) return { ok: false, error: '请选择头像' };
   return { ok: true, nickname: nick, avatar };
 }
 
@@ -102,6 +117,7 @@ export function createRoom(
     engine: null,
     settings: { difficulty: 0, customBank: null },
     usedQuestions: new Set(),
+    gameStartedAt: 0,
   };
   rooms.set(room.code, room);
   return { ok: true, room, player };
@@ -240,6 +256,7 @@ export function startGame(room: Room, player: Player, notify: () => void): Resul
   });
   room.phase = 'playing';
   room.currentGame = gameId;
+  room.gameStartedAt = Date.now();
   return { ok: true };
 }
 
@@ -254,10 +271,13 @@ function settle(room: Room) {
   }
   room.history.push({ game: room.currentGame, at: Date.now(), results });
   room.gamesPlayed += 1;
+  const raw = room.engine.rawScores?.() ?? scores;
   recordGame(
     room.code,
     room.currentGame,
-    room.players.map((p) => ({ deviceId: p.deviceId, nickname: p.nickname, avatar: p.avatar, points: scores[p.id] ?? 0 })),
+    room.mode,
+    Date.now() - room.gameStartedAt,
+    room.players.map((p) => ({ deviceId: p.deviceId, nickname: p.nickname, avatar: p.avatar, points: scores[p.id] ?? 0, raw: raw[p.id] })),
   );
 }
 
