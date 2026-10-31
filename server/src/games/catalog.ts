@@ -149,7 +149,7 @@ const BASE_CATALOG: Omit<GameInfo, 'modes' | 'bank'>[] = [
   },
   {
     id: 'detective',
-    name: '谁是侦探',
+    name: '侦探推理',
     icon: '🔍',
     tagline: '搜集线索，找出真凶与动机',
     ready: true,

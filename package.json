@@ -9,6 +9,7 @@
     "dev:client": "npm run dev -w client",
     "build": "npm run build -w client",
     "start": "npm run start -w server",
+    "test": "node server/test/all.mjs",
     "typecheck": "npm run typecheck -w server && npm run typecheck -w client"
   }
 }

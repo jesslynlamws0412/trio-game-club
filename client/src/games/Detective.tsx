@@ -13,7 +13,7 @@ export default function Detective({ room, view, act }: GameProps) {
   if (view.phase === 'setup') {
     return (
       <div>
-        <h2>🔍 谁是侦探 · {c.title}</h2>
+        <h2>🔍 侦探推理 · {c.title}</h2>
         <p className="surface">{c.intro}</p>
         {view.hostId === me ? (
           <div className="panel">

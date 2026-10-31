@@ -68,6 +68,10 @@ const LIVE = new Set([
 ]);
 
 function g(id: string, name: string, icon: string, category: string, codes: string): PlatformGame {
+  // 已完成的游戏，名称和图标以 catalog.ts 为准（只有一个来源，大厅和房间里不会不一致）
+  const info = LIVE.has(id) ? findGame(id) : undefined;
+  name = info?.name ?? name;
+  icon = info?.icon ?? icon;
   const modes = [...codes].map((c) => CODE[c]);
   const ready = LIVE.has(id);
   return {
