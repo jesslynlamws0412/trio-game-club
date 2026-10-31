@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { request } from '../socket';
+import { send } from '../socket';
 
 const DIFF = ['', '简单', '普通', '困难'];
 const TYPE: Record<string, string> = {
@@ -12,18 +12,16 @@ interface Q {
   options?: string[]; answer: number | number[] | string[]; explain: string;
 }
 
-export function answerOf(q: Q): string {
+function answerOf(q: Q): string {
   if (q.options) {
     return Array.isArray(q.answer) ? (q.answer as number[]).map((i) => q.options![i]).join('、') : q.options[q.answer as number];
   }
   return (q.answer as string[]).join(' / ');
 }
 
-/** 题库中心：浏览全部内置题库（学习模式，直接显示答案和解释），可收藏题目 */
-export default function BankCenter({ onBack, onCustom }: { onBack: () => void; onCustom: () => void }) {
+/** 题库中心：浏览全部内置题库（学习模式，直接显示答案和解释） */
+export default function BankCenter({ onBack }: { onBack: () => void }) {
   const [banks, setBanks] = useState<BankStat[]>([]);
-  const [publicBanks, setPublicBanks] = useState<{ id: string; name: string; ownerName: string; count: number }[]>([]);
-  const [favs, setFavs] = useState<string[]>([]);
   const [open, setOpen] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [list, setList] = useState<Q[]>([]);
@@ -32,30 +30,17 @@ export default function BankCenter({ onBack, onCustom }: { onBack: () => void; o
   const [error, setError] = useState('');
 
   useEffect(() => {
-    request('bank:list').then((r) => {
-      if (!r.ok) return setError(r.error);
-      setBanks(r.banks);
-      setFavs(r.favorites);
-      setPublicBanks(r.custom.publicOthers);
-    });
+    send('bank:list').then((r: any) => (r.ok ? setBanks(r.banks) : setError(r.error)));
   }, []);
 
   useEffect(() => {
     if (!open) return;
-    request('bank:browse', { bankId: open, difficulty: diff || undefined, type: type || undefined }).then((r) => {
+    send('bank:browse', { bankId: open, difficulty: diff || undefined, type: type || undefined }).then((r: any) => {
       if (!r.ok) return setError(r.error);
       setTitle(r.title);
       setList(r.questions);
-      setFavs(r.favorites);
     });
   }, [open, diff, type]);
-
-  const toggle = async (id: string) => {
-    const r = await request('bank:fav', { questionId: id });
-    if (!r.ok) return setError(r.error);
-    setFavs((f) => (r.favorited ? [...f, id] : f.filter((x) => x !== id)));
-    if (open === 'favorites' && !r.favorited) setList((l) => l.filter((q) => q.id !== id));
-  };
 
   if (open) {
     return (
@@ -78,7 +63,6 @@ export default function BankCenter({ onBack, onCustom }: { onBack: () => void; o
           <section key={q.id} className="paper card q-card">
             <div className="q-meta">
               <span className="tag">{DIFF[q.difficulty]}</span> <span className="tag gold">{TYPE[q.type]}</span>
-              <button className="fav-btn" aria-label="收藏" onClick={() => toggle(q.id)}>{favs.includes(q.id) ? '★' : '☆'}</button>
             </div>
             {q.image && <div className="q-image">{q.image}</div>}
             <p className="question">{q.q}</p>
@@ -95,10 +79,6 @@ export default function BankCenter({ onBack, onCustom }: { onBack: () => void; o
     <main className="home hub">
       <header className="masthead small"><h1>题库中心</h1><div className="subtitle">15 个题库 · 简单 / 普通 / 困难</div></header>
       {error && <p className="error">{error}</p>}
-      <div className="actions row">
-        <button className="btn gold" onClick={() => setOpen('favorites')}>⭐ 我的收藏（{favs.length}）</button>
-        <button className="btn green" onClick={onCustom}>✏️ 我的题库</button>
-      </div>
       <section className="paper card">
         <div className="lobby-list">
           {banks.map((b) => (
@@ -112,22 +92,6 @@ export default function BankCenter({ onBack, onCustom }: { onBack: () => void; o
           ))}
         </div>
       </section>
-      {publicBanks.length > 0 && (
-        <section className="paper card">
-          <h2>其他玩家公开的题库</h2>
-          <div className="lobby-list">
-            {publicBanks.map((b) => (
-              <button key={b.id} className="lobby-game bank-row" onClick={() => setOpen(b.id)}>
-                <span className="game-icon">🧑‍🤝‍🧑</span>
-                <span className="lg-main">
-                  <span className="game-name">{b.name}</span>
-                  <span className="lg-meta">作者：{b.ownerName} · {b.count} 题</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
       <p className="footnote"><button className="link-btn" onClick={onBack}>← 返回首页</button></p>
     </main>
   );

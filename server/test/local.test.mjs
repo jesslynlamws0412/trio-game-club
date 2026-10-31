@@ -53,8 +53,6 @@ assert.equal((await emit(host, 'room:vote', { gameId: 'q-cnlit' })).ok, false);
 assert.equal((await emit(host, 'room:vote', { gameId: 'draw' })).ok, false);
 ok('本地房间只列出 7 款适合轮流的游戏，投票选其他游戏被拒绝');
 
-assert.equal((await emit(host, 'friends:invite', { code: 'AAAAAA' })).ok, false);
-ok('本地房间不能邀请好友');
 
 // 打一局剪刀石头布：两个人在同一台设备上轮流秘密出拳
 assert.ok((await emit(host, 'room:vote', { gameId: 'rps' })).ok);
@@ -83,10 +81,9 @@ await until(() => host.state.gameOver);
 assert.equal(host.state.gameOver, true);
 assert.ok((await emit(host, 'game:end')).ok);
 await wait(100);
-const me = (await emit(host, 'me:get', { deviceId: DEV })).me;
-assert.equal(me.played, 1);
-assert.equal(me.wins, 1);
-ok('整局打完：战绩记在房主名下（第二位玩家没有设备身份）');
+assert.equal(host.state.phase, 'lobby');
+assert.equal(host.state.gamesPlayed, 1);
+ok('整局打完，结算后回到大厅');
 
 console.log(`\n全部 ${n} 项通过`);
 for (const s of [host, guest, outsider]) s.close();

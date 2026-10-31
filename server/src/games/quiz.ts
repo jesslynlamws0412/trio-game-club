@@ -1,4 +1,4 @@
-import type { AnswerEntry, GameCtx, GameEngine, Result } from './types.js';
+import type { GameCtx, GameEngine, Result } from './types.js';
 import { rankPoints } from './util.js';
 import { answerText, checkSubmission, draw, isChoice, judge, publicQuestion, DIFFICULTY_NAMES, TYPE_NAMES, type Question } from '../bank/index.js';
 import type { QuizGameCfg } from '../bank/games.js';
@@ -30,7 +30,6 @@ export class QuizGame implements GameEngine {
   private correct = new Map<string, boolean>();
   private points: Record<string, number> = {};
   private lastGains: Record<string, number> = {};
-  private log: AnswerEntry[] = [];
   private timer: NodeJS.Timeout | null = null;
 
   constructor(private ctx: GameCtx, private cfg: QuizGameCfg) {
@@ -42,7 +41,6 @@ export class QuizGame implements GameEngine {
       choiceOnly: cfg.choiceOnly,
       count: TOTAL,
       exclude: ctx.used,
-      pool: ctx.customQuestions ?? null,
     });
     for (const q of this.questions) ctx.used?.add(q.id);
     for (const id of this.ids) this.points[id] = 0;
@@ -82,7 +80,6 @@ export class QuizGame implements GameEngine {
       }
       this.lastGains[id] = gain;
       this.points[id] += gain;
-      this.log.push({ playerId: id, bank: this.q.bank, correct: ok });
     }
     this.timer = setTimeout(() => {
       this.next();
@@ -138,7 +135,7 @@ export class QuizGame implements GameEngine {
     const pub = publicQuestion(q);
     const view: any = {
       ...base,
-      category: this.ctx.customQuestions && this.ctx.customName ? this.ctx.customName : pub.bankName,
+      category: pub.bankName,
       difficultyName: DIFFICULTY_NAMES[q.difficulty],
       typeName: TYPE_NAMES[q.type],
       qtype: q.type,
@@ -169,16 +166,8 @@ export class QuizGame implements GameEngine {
     return this.phase === 'over';
   }
 
-  rawScores(): Record<string, number> {
-    return Object.fromEntries(this.ids.map((id) => [id, this.points[id]]));
-  }
-
   scores(): Record<string, number> {
     return Object.fromEntries(this.ranking().map((r) => [r.id, r.bonus]));
-  }
-
-  answerLog() {
-    return this.log;
   }
 
   dispose() {

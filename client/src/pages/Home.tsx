@@ -9,7 +9,7 @@ const MODE_TEXT: Record<string, { label: string; limit: string }> = {
   party: { label: '多人', limit: '每个房间 4~8 位玩家' },
 };
 
-export default function Home({ onBack, mode = 'trio', preGame }: { onBack?: () => void; mode?: string; preGame?: string }) {
+export default function Home({ onBack, mode = 'trio' }: { onBack?: () => void; mode?: string }) {
   const saved = loadProfile();
   const [nickname, setNickname] = useState(saved?.nickname ?? '');
   const [avatar, setAvatar] = useState(saved?.avatar ?? '🦊');
@@ -46,8 +46,6 @@ export default function Home({ onBack, mode = 'trio', preGame }: { onBack?: () =
       localSetup.pending = { nickname: guestNick.trim(), avatar: avatar === '🐱' ? '🐶' : '🐱', key: res.localKey! };
     }
     saveSession({ code: res.code!, token: res.token! });
-    // 从游戏记录“再来一局”进来的：创建房间后直接投票选好那款游戏
-    if (action === 'create' && preGame) await send('room:vote', { gameId: preGame });
   };
 
   return (
@@ -85,7 +83,7 @@ export default function Home({ onBack, mode = 'trio', preGame }: { onBack?: () =
                 <input value={guestNick} maxLength={8} onChange={(e) => setGuestNick(e.target.value)} />
               </label>
             )}
-            {local && <p className="hint">不需要别人加入。轮到谁，设备就交给谁；只有适合轮流玩的游戏可选。战绩只记在你的名下。</p>}
+            {local && <p className="hint">不需要别人加入。轮到谁，设备就交给谁；只有适合轮流玩的游戏可选。</p>}
           </div>
         )}
 

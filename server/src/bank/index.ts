@@ -127,12 +127,10 @@ export interface DrawOpts {
   count: number;
   /** 本房间已经出过的题，尽量不重复 */
   exclude?: Set<string>;
-  /** 自定义题库：有的话只从这里抽 */
-  pool?: Question[] | null;
 }
 
 export function draw(o: DrawOpts): Question[] {
-  let pool = o.pool ?? BUILTIN.filter((q) => (!o.banks || o.banks.includes(q.bank)) && (!o.tag || q.tag === o.tag));
+  let pool = BUILTIN.filter((q) => (!o.banks || o.banks.includes(q.bank)) && (!o.tag || q.tag === o.tag));
   if (o.choiceOnly) pool = pool.filter(isChoice);
   const fit = (list: Question[]) => (o.difficulty ? list.filter((q) => q.difficulty === o.difficulty) : list);
   const fresh = (list: Question[]) => (o.exclude ? list.filter((q) => !o.exclude!.has(q.id)) : list);

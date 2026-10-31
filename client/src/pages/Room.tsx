@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { request, send } from '../socket';
+import { useState } from 'react';
+import { send } from '../socket';
 import AvatarPicker from '../components/AvatarPicker';
 import type { GameInfo, RoomView } from '../types';
 import Undercover from '../games/Undercover';
@@ -51,7 +51,6 @@ export default function Room({ room, onLeave }: Props) {
   const [error, setError] = useState('');
   const [rulesFor, setRulesFor] = useState<GameInfo | null>(null);
   const [editing, setEditing] = useState(false);
-  const [inviting, setInviting] = useState(false);
 
   const me = room.players.find((p) => p.id === room.you)!;
   const isHost = room.hostId === room.you;
@@ -168,11 +167,6 @@ export default function Room({ room, onLeave }: Props) {
           <button className="btn ghost" onClick={() => setEditing(true)}>
             修改资料
           </button>
-          {room.mode !== 'solo' && !room.local && (
-            <button className="btn ghost" onClick={() => setInviting(true)}>
-              邀请好友
-            </button>
-          )}
         </div>
       </section>
 
@@ -224,22 +218,10 @@ export default function Room({ room, onLeave }: Props) {
                     <option value={3}>困难</option>
                   </select>
                 </label>
-                <label>
-                  题库
-                  <select
-                    value={room.settings.customBank ?? ''}
-                    onChange={(e) => call('room:settings', { customBank: e.target.value || null })}
-                  >
-                    <option value="">内置题库</option>
-                    {room.bankChoices.map((b) => (
-                      <option key={b.id} value={b.id}>{b.name}（{b.count} 题 · {b.ownerName}）</option>
-                    ))}
-                  </select>
-                </label>
               </div>
             ) : (
               <p className="hint">
-                难度：{['不限', '简单', '普通', '困难'][room.settings.difficulty]}　题库：{room.customBankName ?? '内置题库'}（由房主设置）
+                难度：{['不限', '简单', '普通', '困难'][room.settings.difficulty]}　（由房主设置）
               </p>
             )}
           </div>
@@ -255,7 +237,7 @@ export default function Room({ room, onLeave }: Props) {
       </section>
 
       <section className="paper card">
-        <h2>积分排行榜 <small>已玩 {room.gamesPlayed} 局</small></h2>
+        <h2>本房间积分榜 <small>已玩 {room.gamesPlayed} 局</small></h2>
         <ol className="rank">
           {ranking.map((p, i) => (
             <li key={p.id}>
@@ -300,8 +282,6 @@ export default function Room({ room, onLeave }: Props) {
         </div>
       )}
 
-      {inviting && <InviteModal onClose={() => setInviting(false)} />}
-
       {editing && (
         <ProfileEditor
           room={room}
@@ -338,38 +318,6 @@ function ProfileEditor({ room, me, onClose, onError }: { room: RoomView; me: { n
           <button className="btn primary" onClick={save}>保存</button>
           <button className="btn ghost" onClick={onClose}>取消</button>
         </div>
-      </div>
-    </div>
-  );
-}
-
-
-function InviteModal({ onClose }: { onClose: () => void }) {
-  const [list, setList] = useState<any[] | null>(null);
-  const [msg, setMsg] = useState('');
-  useEffect(() => {
-    request('friends:list').then((r) => setList(r.ok ? r.friends : []));
-  }, []);
-  const invite = async (code: string, name: string) => {
-    const r = await request('friends:invite', { code });
-    setMsg(r.ok ? `已邀请 ${name}` : r.error);
-  };
-  return (
-    <div className="modal-back" onClick={onClose}>
-      <div className="modal paper" onClick={(e) => e.stopPropagation()}>
-        <h2>邀请好友</h2>
-        {!list && <p className="hint">读取中……</p>}
-        {list && list.length === 0 && <p className="hint">你还没有好友。在首页的“个人中心 → 好友”里用玩家 ID 添加好友，之后就能在这里邀请他们了。你也可以直接把房间号发给朋友。</p>}
-        <ul className="awards">
-          {list?.map((f) => (
-            <li key={f.code}>
-              <span>{f.online ? '🟢' : '⚪'} {f.avatar} {f.nickname}</span>
-              <button className="btn small green" disabled={!f.online} onClick={() => invite(f.code, f.nickname)}>{f.online ? '邀请' : '离线'}</button>
-            </li>
-          ))}
-        </ul>
-        {msg && <p className="hint">{msg}</p>}
-        <button className="btn primary" onClick={onClose}>关闭</button>
       </div>
     </div>
   );

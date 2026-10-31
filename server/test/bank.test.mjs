@@ -210,156 +210,23 @@ async function playQuiz(list, policy) {
   await leaveAll();
 }
 
-// ───────────────────────── C. 题库中心 / 自定义题库 / 收藏 / 统计 ─────────────────────────
+// ───────────────────────── C. 题库中心（浏览学习模式） ─────────────────────────
 {
-  const [A, B] = socks;
-  const dA = dev(10), dB = dev(11);
-  const L = await emit(A, 'bank:list', { deviceId: dA });
+  const A = socks[0];
+  const L = await emit(A, 'bank:list', {});
   assert.equal(L.banks.length, 15);
-  assert.ok(L.banks.every((b) => b.total >= 8 && b.byDifficulty[1] > 0));
+  assert.ok(L.banks.every((b) => b.total >= 8 && b.byDifficulty[1] > 0 && b.byDifficulty[2] > 0 && b.byDifficulty[3] > 0));
   ok('题库中心：15 个题库及各难度题数');
 
-  const br = await emit(A, 'bank:browse', { deviceId: dA, bankId: 'poem', difficulty: 3 });
+  const br = await emit(A, 'bank:browse', { bankId: 'poem', difficulty: 3 });
   assert.ok(br.ok && br.questions.length > 0 && br.questions.every((q) => q.difficulty === 3 && q.bank === 'poem'));
-  const brT = await emit(A, 'bank:browse', { deviceId: dA, bankId: 'logic', type: 'reasoning' });
+  assert.ok(br.questions.every((q) => q.explain && q.answer !== undefined), '学习模式带答案和解释');
+  const brT = await emit(A, 'bank:browse', { bankId: 'logic', type: 'reasoning' });
   assert.ok(brT.questions.every((q) => q.type === 'reasoning'));
-  assert.equal((await emit(A, 'bank:browse', { deviceId: dA, bankId: 'nope' })).ok, false);
-  ok('按难度、题型浏览题库（学习模式带答案和解释）');
-
-  // 收藏
-  const qid = br.questions[0].id;
-  assert.equal((await emit(A, 'bank:fav', { deviceId: dA, questionId: qid })).favorited, true);
-  const favs = await emit(A, 'bank:browse', { deviceId: dA, bankId: 'favorites' });
-  assert.deepEqual(favs.questions.map((q) => q.id), [qid]);
-  assert.equal((await emit(A, 'bank:fav', { deviceId: dA, questionId: qid })).favorited, false);
-  assert.equal((await emit(A, 'bank:fav', { deviceId: dA, questionId: 'bogus-1' })).ok, false);
-  assert.equal((await emit(A, 'bank:fav', { questionId: qid })).ok, false);
-  ok('收藏题目：收藏 / 取消收藏 / 列表；没有设备身份或题目不存在会被拒绝');
-
-  // 自定义题库
-  const c = await emit(A, 'bank:create', { deviceId: dA, name: '朋友聚会', visibility: 'room', nickname: 'P0', avatar: '🦊' });
-  assert.ok(c.ok);
-  const bid = c.bank.id;
-  assert.equal((await emit(A, 'bank:create', { deviceId: dA, name: '', visibility: 'room' })).ok, false);
-  assert.equal((await emit(A, 'bank:create', { deviceId: dA, name: 'x', visibility: 'secret' })).ok, false);
-  const add = (question) => emit(A, 'bank:saveq', { deviceId: dA, bankId: bid, question });
-  const good = [
-    { type: 'single', q: '我们第一次聚会在哪里？', options: ['咖啡厅', '公园', '家里'], answer: 2, difficulty: 1 },
-    { type: 'truefalse', q: '小明喜欢吃榴莲。', answer: 0 },
-    { type: 'multi', q: '谁参加了上次聚会？', options: ['小明', '小红', '小刚', '小丽'], answer: [0, 1, 3], explain: '上次三人加小丽。' },
-    { type: 'fill', q: '小红的生日在几月？（只写数字）', answer: ['5', '五'] },
-    { type: 'single', q: '最爱的游戏？', options: ['A', 'B'], answer: 1, difficulty: 3 },
-  ];
-  const ids = [];
-  for (const g of good) {
-    const r = await add(g);
-    assert.ok(r.ok, JSON.stringify(r));
-    ids.push(r.id);
-  }
-  for (const bad of [
-    { type: 'single', q: '', options: ['a', 'b'], answer: 0 },
-    { type: 'single', q: '只有一个选项', options: ['a'], answer: 0 },
-    { type: 'single', q: '重复选项', options: ['a', 'a'], answer: 0 },
-    { type: 'single', q: '答案越界', options: ['a', 'b'], answer: 5 },
-    { type: 'multi', q: '多选只有两项', options: ['a', 'b'], answer: [0] },
-    { type: 'fill', q: '填空没答案', answer: [] },
-    { type: 'truefalse', q: '判断没答案', answer: 3 },
-    { type: 'magic', q: '未知题型', answer: 0 },
-    { type: 'single', q: 'x'.repeat(200), options: ['a', 'b'], answer: 0 },
-  ]) assert.equal((await add(bad)).ok, false, JSON.stringify(bad));
-  ok('自定义题库：创建、添加 5 种合法题目；9 种不合法题目全部被拒绝');
-
-  assert.equal((await emit(B, 'bank:saveq', { deviceId: dB, bankId: bid, question: good[0] })).ok, false);
-  assert.equal((await emit(B, 'bank:delete', { deviceId: dB, bankId: bid })).ok, false);
-  assert.equal((await emit(B, 'bank:browse', { deviceId: dB, bankId: bid })).ok, false);
-  ok('别人不能修改、删除或浏览我的非公开题库');
-
-  // 编辑 / 删除
-  assert.ok((await emit(A, 'bank:saveq', { deviceId: dA, bankId: bid, question: { ...good[1], id: ids[1], q: '小明不喜欢吃榴莲。', answer: 1 } })).ok);
-  let mine = (await emit(A, 'bank:list', { deviceId: dA })).custom.mine.find((b) => b.id === bid);
-  assert.equal(mine.questions.find((q) => q.id === ids[1]).q, '小明不喜欢吃榴莲。');
-  assert.equal(mine.questions.length, 5);
-  assert.ok((await emit(A, 'bank:saveq', { deviceId: dA, bankId: bid, question: { type: 'fill', q: '临时题', answer: ['a'] } })).ok);
-  mine = (await emit(A, 'bank:list', { deviceId: dA })).custom.mine.find((b) => b.id === bid);
-  const temp = mine.questions.find((q) => q.q === '临时题');
-  assert.ok((await emit(A, 'bank:delq', { deviceId: dA, bankId: bid, questionId: temp.id })).ok);
-  assert.equal((await emit(A, 'bank:delq', { deviceId: dA, bankId: bid, questionId: temp.id })).ok, false);
-  ok('编辑题目（改题干和答案）、删除题目');
-
-  // 使用权限：room = 只有创建者作为房主可用
-  const roomOf = async (host, hostDev, mode = 'solo') => {
-    const r = await emit(host, 'room:create', { nickname: 'H', avatar: '🦊', mode, deviceId: hostDev });
-    assert.ok(r.ok);
-    return r;
-  };
-  await roomOf(B, dB, 'solo');
-  assert.equal((await emit(B, 'room:settings', { customBank: bid })).ok, false);
-  await emit(B, 'room:leave');
-  ok('“仅房间使用”的题库，别人当房主时不能选用');
-
-  await emit(A, 'bank:update', { deviceId: dA, bankId: bid, visibility: 'private' });
-  await roomOf(A, dA, 'trio');
-  assert.equal((await emit(A, 'room:settings', { customBank: bid })).ok, false);
-  await emit(A, 'room:leave');
-  await roomOf(A, dA, 'solo');
-  await wait();
-  assert.equal(A.state.bankChoices.some((b) => b.id === bid), true);
-  assert.ok((await emit(A, 'room:settings', { customBank: bid })).ok);
-  ok('“仅自己使用”的题库只能在自己的单人房间里选用');
-
-  // 用自定义题库玩一局（单人，5 题）
-  await emit(A, 'room:vote', { gameId: 'q-common' });
-  await emit(A, 'room:ready', { ready: true });
-  assert.ok((await emit(A, 'room:start')).ok);
-  await wait();
-  const texts = new Set();
-  for (let k = 0; k < 5; k++) {
-    await wait(k ? 300 : 0);
-    const v = A.state.game;
-    assert.equal(v.category, '朋友聚会');
-    assert.equal(v.total, 5);
-    const q = mine.questions.concat([]).find((x) => x.q === v.question) ?? (await emit(A, 'bank:list', { deviceId: dA })).custom.mine.find((b) => b.id === bid).questions.find((x) => x.q === v.question);
-    assert.ok(q, '题目应来自自定义题库：' + v.question);
-    texts.add(q.q);
-    let a;
-    if (q.type === 'multi') a = { choices: q.answer };
-    else if (q.options) a = { choice: q.answer };
-    else a = { text: q.answer[0] };
-    assert.ok((await act(A, { type: 'answer', index: k, ...a })).ok);
-    await wait(60);
-    assert.equal(A.state.game.correct[A.state.you], true);
-  }
-  await wait(300);
-  assert.equal(A.state.gameOver, true);
-  assert.equal(texts.size, 5);
-  ok('用自定义题库玩单人：5 题全部来自自定义题库，题型都能判对');
-  await emit(A, 'game:end');
-  await emit(A, 'room:leave');
-
-  // 答题统计
-  const prof = await emit(A, 'profile:get', { deviceId: dA });
-  assert.ok(prof.me.profile.quiz.answered >= 5 && prof.me.profile.quiz.bestStreak >= 5);
-  ok(`答题统计已记录：共答 ${prof.me.profile.quiz.answered} 题，答对 ${prof.me.profile.quiz.correct} 题，最长连对 ${prof.me.profile.quiz.bestStreak}`);
-
-  // 题库少于 5 题不能使用；公开题库别人可用
-  const c2 = await emit(A, 'bank:create', { deviceId: dA, name: '公开小库', visibility: 'public' });
-  await emit(A, 'bank:saveq', { deviceId: dA, bankId: c2.bank.id, question: good[0] });
-  await roomOf(B, dB, 'solo');
-  assert.equal((await emit(B, 'room:settings', { customBank: c2.bank.id })).ok, false);
-  for (let i = 0; i < 4; i++) await emit(A, 'bank:saveq', { deviceId: dA, bankId: c2.bank.id, question: { ...good[1], q: `判断第${i}题` } });
-  assert.ok((await emit(B, 'room:settings', { customBank: c2.bank.id })).ok);
-  const pub = (await emit(B, 'bank:list', { deviceId: dB })).custom.publicOthers;
-  assert.ok(pub.some((b) => b.id === c2.bank.id));
-  assert.ok((await emit(B, 'bank:browse', { deviceId: dB, bankId: c2.bank.id })).ok);
-  await emit(B, 'room:leave');
-  ok('题库少于 5 题不能用于游戏；公开题库其他玩家可以选用和浏览');
-
-  // 删除题库
-  assert.ok((await emit(A, 'bank:delete', { deviceId: dA, bankId: bid })).ok);
-  assert.equal((await emit(A, 'bank:browse', { deviceId: dA, bankId: bid })).ok, false);
-  ok('删除自定义题库');
+  assert.equal((await emit(A, 'bank:browse', { bankId: 'nope' })).ok, false);
+  assert.equal((await emit(A, 'bank:browse', { bankId: 'favorites' })).ok, false);
+  ok('按难度、题型浏览题库（带答案和解释）；不存在的题库被拒绝');
 }
-
 console.log(`\n全部 ${n} 项通过`);
 for (const s of socks) s.close();
 process.exit(0);

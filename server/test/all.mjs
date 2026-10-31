@@ -51,23 +51,8 @@ function run(name, file, args = [], { tsx = false, env = {} } = {}) {
 }
 
 try {
-  // 1) 战绩持久化：打完一局 → 重启服务器 → 数据还在
-  let dir = freshDir();
-  await startServer(dir);
-  run('玩家战绩（打）', 'profile.test.mjs', ['play']);
-  await sleep(1200); // 等延迟保存落盘
-  await stopServer();
-  await startServer(dir);
-  run('玩家战绩（重启后读取）', 'profile.test.mjs', ['check']);
-  await stopServer();
-
-  // 2) 玩家系统（需要干净数据）
-  dir = freshDir();
-  await startServer(dir);
-  run('玩家系统：资料/成就/记录/好友/排行榜', 'social.test.mjs');
-  await stopServer();
-
-  // 3) 其余全部
+  // 全部测试共用一个全新的服务器
+  let dir;
   dir = freshDir();
   await startServer(dir);
   run('大厅与房间（三人）', 'lobby.test.mjs');

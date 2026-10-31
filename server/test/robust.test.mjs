@@ -78,7 +78,6 @@ async function fuzz() {
       await emit(ps[0], 'room:create', bad);
       await emit(ps[0], 'room:vote', bad);
       await emit(ps[0], 'room:profile', bad);
-      await emit(ps[0], 'profile:get', bad);
     }
     const results = await Promise.all(pending);
     assert.ok(results.every((r) => r === undefined || typeof r === 'object' || r === 'timeout'));

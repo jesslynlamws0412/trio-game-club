@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import Home from './Home';
-import Me from './Me';
 import BankCenter from './BankCenter';
-import CustomBanks from './CustomBanks';
 
 type ModeId = 'solo' | 'duo' | 'trio' | 'party';
 interface ModeInfo { id: ModeId; name: string; en: string; icon: string; players: string; desc: string; open: boolean }
@@ -15,11 +13,9 @@ interface PlatformData { modes: ModeInfo[]; categories: CategoryInfo[]; games: P
 
 type View =
   | { page: 'hub' }
-  | { page: 'room'; mode: ModeId; preGame?: string }
-  | { page: 'me' }
+  | { page: 'room'; mode: ModeId }
   | { page: 'games'; mode: ModeId | 'all' }
-  | { page: 'bank' }
-  | { page: 'custom' };
+  | { page: 'bank' };
 
 function playersText(g: PGame) {
   return g.minPlayers === g.maxPlayers ? `${g.minPlayers} 人` : `${g.minPlayers}~${g.maxPlayers} 人`;
@@ -37,10 +33,8 @@ export default function Platform() {
       .catch(() => setFailed(true));
   }, []);
 
-  if (view.page === 'bank') return <BankCenter onBack={() => setView({ page: 'hub' })} onCustom={() => setView({ page: 'custom' })} />;
-  if (view.page === 'custom') return <CustomBanks onBack={() => setView({ page: 'bank' })} />;
-  if (view.page === 'me') return <Me onBack={() => setView({ page: 'hub' })} onReplay={(mode, game) => setView({ page: 'room', mode: mode as ModeId, preGame: game })} />;
-  if (view.page === 'room') return <Home mode={view.mode} preGame={view.preGame} onBack={() => setView({ page: 'hub' })} />;
+  if (view.page === 'bank') return <BankCenter onBack={() => setView({ page: 'hub' })} />;
+  if (view.page === 'room') return <Home mode={view.mode} onBack={() => setView({ page: 'hub' })} />;
 
   if (!data) {
     return <div className="center-msg">{failed ? '游戏大厅加载失败，请刷新页面重试' : '正在布置大厅……'}</div>;
@@ -99,9 +93,7 @@ export default function Platform() {
         </div>
       </section>
 
-      <p className="footnote">
-        <button className="btn small gold" onClick={() => setView({ page: 'me' })}>👤 个人中心（资料 · 成就 · 记录 · 排行榜 · 好友）</button>
-      </p>      <p className="footnote">共规划 {data.games.length} 款游戏，其中 {live.length} 款已可游玩，其余标注“开发中”</p>
+<p className="footnote">共规划 {data.games.length} 款游戏，其中 {live.length} 款已可游玩，其余标注“开发中”</p>
     </main>
   );
 }

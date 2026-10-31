@@ -104,10 +104,6 @@ export class RpsGame implements GameEngine {
     return this.phase === 'over';
   }
 
-  rawScores(): Record<string, number> {
-    return Object.fromEntries(this.ids.map((id) => [id, this.points[id]]));
-  }
-
   scores(): Record<string, number> {
     if (this.all.includes(CPU)) {
       // 单人：赢电脑 +3，平局 +1，输 0
