@@ -139,12 +139,14 @@ io.on('connection', (socket) => {
     }
     attach(socket, res.room, res.player);
     markOnline(socket, res.player.deviceId);
-    reply(ack, { ok: true, code: res.room.code, token: res.player.token });
+    // 本地轮流房间：把密钥只交给创建者，让他的设备替第二位玩家加入
+    const localKey = res.room.local && res.player.id === res.room.hostId ? res.room.localKey : undefined;
+    reply(ack, { ok: true, code: res.room.code, token: res.player.token, localKey });
     broadcast(res.room);
   };
 
-  on('room:create', (data, ack) => joined(createRoom(data?.nickname, data?.avatar, data?.deviceId, data?.mode), ack));
-  on('room:join', (data, ack) => joined(joinRoom(data?.code, data?.nickname, data?.avatar, data?.deviceId), ack));
+  on('room:create', (data, ack) => joined(createRoom(data?.nickname, data?.avatar, data?.deviceId, data?.mode, data?.local === true), ack));
+  on('room:join', (data, ack) => joined(joinRoom(data?.code, data?.nickname, data?.avatar, data?.deviceId, data?.key), ack));
   on('room:resume', (data, ack) => joined(resumeRoom(data?.code, data?.token), ack));
   // 我的战绩 + 全服排行榜（只凭自己的 deviceId 查自己；排行榜不含任何身份凭证）
   on('profile:get', (data, ack) => {
@@ -261,6 +263,7 @@ io.on('connection', (socket) => {
   on('friends:invite', (d, ack) => {
     const c = ctx(socket);
     if (!c || !c.player.deviceId) return reply(ack, { ok: false, error: '你需要先在一个房间里' });
+    if (c.room.local) return reply(ack, { ok: false, error: '本地轮流房间不能邀请好友' });
     if (c.room.phase !== 'lobby') return reply(ack, { ok: false, error: '游戏进行中，不能邀请' });
     if (c.room.players.length >= MODE_LIMITS[c.room.mode].max) return reply(ack, { ok: false, error: '房间已满' });
     const target = deviceByCode(d?.code);

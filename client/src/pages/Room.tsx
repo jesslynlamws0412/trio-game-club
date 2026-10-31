@@ -168,7 +168,7 @@ export default function Room({ room, onLeave }: Props) {
           <button className="btn ghost" onClick={() => setEditing(true)}>
             修改资料
           </button>
-          {room.mode !== 'solo' && (
+          {room.mode !== 'solo' && !room.local && (
             <button className="btn ghost" onClick={() => setInviting(true)}>
               邀请好友
             </button>

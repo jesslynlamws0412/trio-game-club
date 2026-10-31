@@ -3,11 +3,38 @@ import type { Ack } from './types';
 
 export const socket = io({ autoConnect: true });
 
+/** 当前负责发送操作的连接。平时就是 socket；本地轮流时在两位玩家的连接之间切换。 */
+let current = socket;
+export function setActiveSocket(s: typeof socket) {
+  current = s;
+}
+
+/** 本地轮流：创建房间后，把第二位玩家的信息交给 LocalRoom 去加入 */
+export const localSetup: { pending: { nickname: string; avatar: string; key: string } | null } = { pending: null };
+
+const LOCAL_KEY = 'trio-local';
+export function loadLocal(): { code: string; token: string } | null {
+  try {
+    return JSON.parse(localStorage.getItem(LOCAL_KEY) ?? 'null');
+  } catch {
+    return null;
+  }
+}
+export function saveLocal(v: { code: string; token: string } | null) {
+  try {
+    if (v) localStorage.setItem(LOCAL_KEY, JSON.stringify(v));
+    else localStorage.removeItem(LOCAL_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function send(event: string, data?: unknown): Promise<Ack> {
+  const sock = current;
   return new Promise((resolve) => {
-    if (!socket.connected) return resolve({ ok: false, error: '尚未连接服务器，请稍候再试' });
+    if (!sock.connected) return resolve({ ok: false, error: '尚未连接服务器，请稍候再试' });
     const timer = setTimeout(() => resolve({ ok: false, error: '服务器无响应' }), 8000);
-    socket.emit(event, data, (res: Ack) => {
+    sock.emit(event, data, (res: Ack) => {
       clearTimeout(timer);
       resolve(res);
     });

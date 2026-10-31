@@ -20,6 +20,8 @@ export interface GameInfo {
   ready: boolean;
   /** 该游戏能玩的人数模式 */
   modes: ModeId[];
+  /** 是否适合本地轮流（两人共用一台设备）：每次只有一个人需要操作，或秘密选择可以逐个提交 */
+  local: boolean;
   /** 是否从题库抽题（房主可以在大厅里设置难度、选择自定义题库） */
   bank: boolean;
 }
@@ -43,8 +45,11 @@ const MODES_BY_GAME: Record<string, ModeId[]> = {
 
 const QUIZ_IDS = new Set(QUIZ_GAMES.map((g) => g.id));
 
+/** 支持本地轮流的游戏。客户端的交接逻辑（client/src/pages/LocalRoom.tsx）要对每款游戏说明现在轮到谁操作。 */
+export const LOCAL_GAMES = new Set(['number', 'memory', 'dice', 'idiom', 'rps', 'tacit', 'truth']);
+
 /** 题库类游戏（除了最早的答题竞赛）按 bank/games.ts 的配置统一生成 */
-const QUIZ_ENTRIES: Omit<GameInfo, 'modes' | 'bank'>[] = QUIZ_GAMES.filter((g) => g.id !== 'quiz').map((g) => ({
+const QUIZ_ENTRIES: Omit<GameInfo, 'modes' | 'bank' | 'local'>[] = QUIZ_GAMES.filter((g) => g.id !== 'quiz').map((g) => ({
   id: g.id,
   name: g.name,
   icon: g.icon,
@@ -59,7 +64,7 @@ const QUIZ_ENTRIES: Omit<GameInfo, 'modes' | 'bank'>[] = QUIZ_GAMES.filter((g) =
   ],
 }));
 
-const BASE_CATALOG: Omit<GameInfo, 'modes' | 'bank'>[] = [
+const BASE_CATALOG: Omit<GameInfo, 'modes' | 'bank' | 'local'>[] = [
   {
     id: 'undercover',
     name: '谁是卧底',
@@ -293,6 +298,7 @@ const BASE_CATALOG: Omit<GameInfo, 'modes' | 'bank'>[] = [
 export const GAME_CATALOG: GameInfo[] = [...BASE_CATALOG, ...QUIZ_ENTRIES].map((g) => ({
   ...g,
   bank: QUIZ_IDS.has(g.id),
+  local: LOCAL_GAMES.has(g.id),
   modes: QUIZ_IDS.has(g.id) ? (['solo', 'duo', 'trio', 'party'] as ModeId[]) : (MODES_BY_GAME[g.id] ?? ['trio']),
 }));
 

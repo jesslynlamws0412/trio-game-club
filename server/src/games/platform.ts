@@ -37,6 +37,8 @@ export interface PlatformGame {
   minPlayers: number;
   maxPlayers: number;
   ready: boolean;
+  /** 支持本地轮流（两人共用一台设备） */
+  local: boolean;
 }
 
 export const MODES: ModeInfo[] = [
@@ -84,6 +86,7 @@ function g(id: string, name: string, icon: string, category: string, codes: stri
     minPlayers: Math.min(...modes.map((m) => MIN[m])),
     maxPlayers: Math.max(...modes.map((m) => MAX[m])),
     ready,
+    local: ready && !!findGame(id)?.local,
   };
 }
 

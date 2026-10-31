@@ -73,6 +73,7 @@ try {
   run('大厅与房间（三人）', 'lobby.test.mjs');
   run('人数模式：单人/双人/多人', 'modes.test.mjs');
   run('三人游戏：卧底/答题/海龟汤/狼人杀', 'games.test.mjs');
+  run('双人本地轮流', 'local.test.mjs');
   run('你画我猜 / 抽卡', 'games2.test.mjs');
   run('侦探 / 大富翁', 'games3.test.mjs');
   run('新游戏一：谁最有可能/默契/骰子/猜数字/翻牌', 'games4.test.mjs');

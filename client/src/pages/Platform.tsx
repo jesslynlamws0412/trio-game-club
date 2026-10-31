@@ -9,7 +9,7 @@ interface ModeInfo { id: ModeId; name: string; en: string; icon: string; players
 interface CategoryInfo { id: string; name: string; icon: string }
 interface PGame {
   id: string; name: string; icon: string; category: string;
-  modes: ModeId[]; liveModes: ModeId[]; minPlayers: number; maxPlayers: number; ready: boolean;
+  modes: ModeId[]; liveModes: ModeId[]; minPlayers: number; maxPlayers: number; ready: boolean; local?: boolean;
 }
 interface PlatformData { modes: ModeInfo[]; categories: CategoryInfo[]; games: PGame[] }
 
@@ -154,7 +154,7 @@ function GameLobby({ data, mode, onMode, onBack, onEnter }: {
                   <span className="lg-main">
                     <span className="game-name">{g.name}</span>
                     <span className="lg-meta">
-                      {playersText(g)} · {g.modes.map((m) => data.modes.find((x) => x.id === m)!.name).join('/')}
+                      {playersText(g)}{g.local ? ' · 可本地轮流' : ''} · {g.modes.map((m) => data.modes.find((x) => x.id === m)!.name).join('/')}
                     </span>
                   </span>
                   {g.ready ? (

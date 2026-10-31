@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { GAME_CATALOG, MODE_LIMITS, findGame, type ModeId } from './games/catalog.js';
+import { GAME_CATALOG, LOCAL_GAMES, MODE_LIMITS, findGame, type ModeId } from './games/catalog.js';
 import { createEngine } from './games/index.js';
 import type { GameEngine, Result, RoomSettings } from './games/types.js';
 import { bankChoicesFor, bankForGame, bankName, recordAnswers, recordGame, touchProfile, validDeviceId } from './store.js';
@@ -53,6 +53,9 @@ export interface Room {
   usedQuestions: Set<string>;
   /** 当前这局开始的时间，用来记录游戏时长 */
   gameStartedAt: number;
+  /** 本地轮流：两位玩家共用一台设备。加入需要房主设备持有的密钥，外人不能凭房间号加入 */
+  local: boolean;
+  localKey: string | null;
 }
 
 const rooms = new Map<string, Room>();
@@ -99,10 +102,12 @@ export function createRoom(
   avatar: unknown,
   deviceId?: unknown,
   mode: unknown = 'trio', // 不传模式时沿用原来的三人房间
+  local: unknown = false,
 ): Result<{ room: Room; player: Player }> {
   const prof = cleanProfile(nickname, avatar);
   if (!prof.ok) return prof;
   if (typeof mode !== 'string' || !(mode in MODE_LIMITS)) return { ok: false, error: '未知的游戏模式' };
+  if (local === true && mode !== 'duo') return { ok: false, error: '本地轮流只支持双人模式' };
   if (rooms.size >= MAX_ROOMS) return { ok: false, error: '服务器上的房间太多了，请稍后再试' };
   const player = newPlayer(prof.nickname, prof.avatar, deviceId);
   const room: Room = {
@@ -118,6 +123,8 @@ export function createRoom(
     settings: { difficulty: 0, customBank: null },
     usedQuestions: new Set(),
     gameStartedAt: 0,
+    local: local === true,
+    localKey: local === true ? randomUUID().slice(0, 12) : null,
   };
   rooms.set(room.code, room);
   return { ok: true, room, player };
@@ -128,12 +135,14 @@ export function joinRoom(
   nickname: unknown,
   avatar: unknown,
   deviceId?: unknown,
+  key?: unknown,
 ): Result<{ room: Room; player: Player }> {
   const prof = cleanProfile(nickname, avatar);
   if (!prof.ok) return prof;
   const room = typeof code === 'string' ? rooms.get(code.trim()) : undefined;
   if (!room) return { ok: false, error: '房间不存在，请检查房间号' };
   if (room.phase !== 'lobby') return { ok: false, error: '游戏已经开始，无法加入' };
+  if (room.local && key !== room.localKey) return { ok: false, error: '这是一个本地轮流房间（两人共用一台设备），不能从其他设备加入' };
   const lim = MODE_LIMITS[room.mode];
   if (room.players.length >= lim.max) return { ok: false, error: `房间已满（${lim.label}房间最多 ${lim.max} 人）` };
   if (room.players.some((p) => p.nickname === prof.nickname)) return { ok: false, error: '该昵称已被使用' };
@@ -186,6 +195,7 @@ export function voteGame(room: Room, player: Player, gameId: unknown): Result {
   const game = typeof gameId === 'string' ? findGame(gameId) : undefined;
   if (!game) return { ok: false, error: '没有这个游戏' };
   if (!game.modes.includes(room.mode)) return { ok: false, error: `这个游戏不支持${MODE_LIMITS[room.mode].label}模式` };
+  if (room.local && !LOCAL_GAMES.has(game.id)) return { ok: false, error: '这个游戏暂时不支持本地轮流' };
   player.vote = game.id;
   return { ok: true };
 }
@@ -368,7 +378,8 @@ export function viewFor(room: Room, viewer: Player) {
       score: p.score,
       vote: p.vote,
     })),
-    catalog: GAME_CATALOG.filter((g) => g.modes.includes(room.mode)),
+    local: room.local,
+    catalog: GAME_CATALOG.filter((g) => g.modes.includes(room.mode) && (!room.local || g.local)),
     avatars: AVATARS,
   };
 }

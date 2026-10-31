@@ -7,6 +7,7 @@ export interface GameInfo {
   ready: boolean;
   modes: string[];
   bank: boolean;
+  local: boolean;
 }
 
 export interface PlayerView {
@@ -25,6 +26,7 @@ export interface RoomView {
   hostId: string;
   phase: 'lobby' | 'playing';
   mode: 'solo' | 'duo' | 'trio' | 'party';
+  local: boolean;
   minPlayers: number;
   maxPlayers: number;
   currentGame: string | null;
@@ -42,4 +44,4 @@ export interface RoomView {
   avatars: string[];
 }
 
-export type Ack = { ok: true; code?: string; token?: string } | { ok: false; error: string };
+export type Ack = { ok: true; code?: string; token?: string; localKey?: string } | { ok: false; error: string };

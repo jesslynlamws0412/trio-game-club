@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getDeviceId, loadProfile, saveProfile, saveSession, send } from '../socket';
+import { getDeviceId, loadProfile, localSetup, saveLocal, saveProfile, saveSession, send } from '../socket';
 import AvatarPicker from '../components/AvatarPicker';
 
 const MODE_TEXT: Record<string, { label: string; limit: string }> = {
@@ -16,12 +16,19 @@ export default function Home({ onBack, mode = 'trio', preGame }: { onBack?: () =
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  // 双人模式可以选择本地轮流：两个人共用这台设备
+  const [local, setLocal] = useState(false);
+  const [guestNick, setGuestNick] = useState('玩家2');
 
   const enter = async (action: 'create' | 'join') => {
     if (busy) return;
     setError('');
     if (!nickname.trim()) return setError('请先给自己起个昵称');
     if (action === 'join' &&!/^\d{4}$/.test(code.trim())) return setError('请输入 4 位房间号');
+    const useLocal = action === 'create' && mode === 'duo' && local;
+    if (useLocal && (!guestNick.trim() || guestNick.trim().length > 8 || guestNick.trim() === nickname.trim())) {
+      return setError('请给第二位玩家起一个和你不同的昵称（最多 8 个字）');
+    }
     setBusy(true);
     saveProfile({ nickname: nickname.trim(), avatar });
     const res = await send(action === 'create' ? 'room:create' : 'room:join', {
@@ -30,9 +37,14 @@ export default function Home({ onBack, mode = 'trio', preGame }: { onBack?: () =
       code: code.trim(),
       deviceId: getDeviceId(),
       mode,
+      local: useLocal,
     });
     setBusy(false);
     if (!res.ok) return setError(res.error);
+    if (useLocal) {
+      saveLocal(null);
+      localSetup.pending = { nickname: guestNick.trim(), avatar: avatar === '🐱' ? '🐶' : '🐱', key: res.localKey! };
+    }
     saveSession({ code: res.code!, token: res.token! });
     // 从游戏记录“再来一局”进来的：创建房间后直接投票选好那款游戏
     if (action === 'create' && preGame) await send('room:vote', { gameId: preGame });
@@ -61,6 +73,21 @@ export default function Home({ onBack, mode = 'trio', preGame }: { onBack?: () =
           <span>头像</span>
           <AvatarPicker value={avatar} onChange={setAvatar} />
         </div>
+
+        {mode === 'duo' && (
+          <div className="local-opt">
+            <label>
+              <input type="checkbox" checked={local} onChange={(e) => setLocal(e.target.checked)} /> 本地轮流（两个人共用这台设备）
+            </label>
+            {local && (
+              <label className="field">
+                <span>第二位玩家的昵称</span>
+                <input value={guestNick} maxLength={8} onChange={(e) => setGuestNick(e.target.value)} />
+              </label>
+            )}
+            {local && <p className="hint">不需要别人加入。轮到谁，设备就交给谁；只有适合轮流玩的游戏可选。战绩只记在你的名下。</p>}
+          </div>
+        )}
 
         <div className="actions">
           <button className="btn primary" disabled={busy} onClick={() => enter('create')}>

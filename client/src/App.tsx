@@ -3,6 +3,7 @@ import { getDeviceId, loadProfile, loadSession, request, saveProfile, saveSessio
 import type { RoomView } from './types';
 import Platform from './pages/Platform';
 import Room from './pages/Room';
+import LocalRoom from './pages/LocalRoom';
 
 interface Invite { nickname: string; avatar: string; code: string; mode: string }
 interface Toast { id: number; icon: string; name: string; desc: string }
@@ -106,7 +107,7 @@ export default function App() {
       {resuming ? (
         <div className="center-msg">正在回到你的房间……</div>
       ) : room ? (
-        <Room room={room} onLeave={leave} />
+        room.local ? <LocalRoom room={room} onLeave={leave} /> : <Room room={room} onLeave={leave} />
       ) : (
         <Platform />
       )}
