@@ -4,7 +4,8 @@ import { AwardList, nameOf, useCountdown, type GameProps } from './shared';
 export default function Pick({ room, view, act }: GameProps) {
   const left = useCountdown(view.endsInMs ?? 0, view);
   const likely = view.game === 'likely';
-  const title = likely ? '👆 谁最有可能' : '💞 默契大考验';
+  const tf = view.game === 'truefalse';
+  const title = likely ? '👆 谁最有可能' : tf ? '⚖️ 真假判断' : '💞 默契大考验';
 
   if (view.phase === 'over') {
     return (
@@ -41,7 +42,7 @@ export default function Pick({ room, view, act }: GameProps) {
           const self = likely && o.id === room.you;
           let cls = 'btn opt';
           if (revealing) {
-            if (likely ? view.tally[o.id] === top && top > 0 : view.tally[o.id] === top && top > 1) cls += ' right';
+            if (tf ? o.id === view.answer : likely ? view.tally[o.id] === top && top > 0 : view.tally[o.id] === top && top > 1) cls += ' right';
             else if (view.picks[room.you] === o.id) cls += ' wrong';
           } else if (view.myPick === o.id) cls += ' chosen';
           const voters = revealing ? room.players.filter((p) => view.picks[p.id] === o.id) : [];
@@ -66,10 +67,11 @@ export default function Pick({ room, view, act }: GameProps) {
       </div>
       {!revealing && (
         <p className="hint">
-          {picked ? '已提交，等待其他人……' : likely ? '投给你认为最有可能的人（不能投自己）' : '选一个你觉得大家也会选的'}
+          {picked ? '已提交，等待其他人……' : tf ? '判断这句话是对还是错' : likely ? '投给你认为最有可能的人（不能投自己）' : '选一个你觉得大家也会选的'}
           （已选择 {view.answered.length} / {room.players.length}）
         </p>
       )}
+      {revealing && tf && <p className="hint">解释：{view.why}</p>}
       {revealing && (
         <ul className="awards">
           {room.players.map((p) => (

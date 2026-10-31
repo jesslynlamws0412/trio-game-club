@@ -62,6 +62,7 @@ const MAX: Record<ModeId, number> = { solo: 1, duo: 2, trio: 3, party: 8 };
 const LIVE = new Set([
   'undercover', 'draw', 'quiz', 'werewolf', 'monopoly', 'cards', 'turtlesoup', 'detective',
   'likely', 'tacit', 'dice', 'number', 'memory',
+  'truefalse', 'rps', 'idiom', 'truth', 'reaction',
 ]);
 
 function g(id: string, name: string, icon: string, category: string, codes: string): PlatformGame {
@@ -101,7 +102,7 @@ export const PLATFORM_GAMES: PlatformGame[] = [
   g('p-quiz-trivia', '趣味冷知识问答', '🧊', 'quiz', ALL),
   // B 文字与语言
   g('p-word-guess', '猜词游戏', '🔡', 'word', 'SDTP'),
-  g('p-word-idiom', '成语接龙', '🐉', 'word', ALL),
+  g('idiom', '成语接龙', '🐉', 'word', ALL),
   g('p-word-poem', '诗词接龙', '🌸', 'word', ALL),
   g('p-word-assoc', '词语联想', '💭', 'word', 'DTP'),
   g('p-word-bomb', '文字炸弹', '💣', 'word', 'DTP'),
@@ -116,7 +117,7 @@ export const PLATFORM_GAMES: PlatformGame[] = [
   g('turtlesoup', '海龟汤', '🐢', 'puzzle', ALL),
   g('undercover', '谁是卧底', '🕵️', 'puzzle', 'TP'),
   g('detective', '侦探推理', '🔍', 'puzzle', 'SDTP'),
-  g('p-puz-truefalse', '真假判断', '⚖️', 'puzzle', 'SDTP'),
+  g('truefalse', '真假判断', '⚖️', 'puzzle', 'SDTP'),
   g('p-puz-liar', '找出说谎者', '🤥', 'puzzle', 'TP'),
   g('p-puz-escape', '密室逃脱', '🚪', 'puzzle', 'SDTP'),
   g('p-puz-logic', '逻辑推理', '🧠', 'puzzle', 'SD'),
@@ -137,7 +138,7 @@ export const PLATFORM_GAMES: PlatformGame[] = [
   g('p-cls-reversi', '黑白棋', '⚪', 'classic', 'SD'),
   g('monopoly', '大富翁', '🏠', 'classic', 'T'),
   // E 聚会互动
-  g('p-par-truth', '真心话大冒险', '💬', 'party', 'TP'),
+  g('truth', '真心话大冒险', '💬', 'party', 'DTP'),
   g('draw', '你画我猜', '🎨', 'party', 'DTP'),
   g('likely', '谁最有可能', '👆', 'party', 'TP'),
   g('p-par-quick', '快问快答', '⚡', 'party', 'DTP'),
@@ -149,11 +150,11 @@ export const PLATFORM_GAMES: PlatformGame[] = [
   g('p-par-keyword', '关键词联想', '🔑', 'party', 'DTP'),
   g('cards', '抽卡游戏', '🎴', 'party', 'TP'),
   // F 反应与策略
-  g('p-rea-speed', '反应速度挑战', '👆', 'reaction', 'SDTP'),
+  g('reaction', '反应速度挑战', '⚡', 'reaction', 'SDTP'),
   g('p-rea-digit', '数字记忆', '🔢', 'reaction', 'SDTP'),
   g('p-rea-pattern', '图案记忆', '🔷', 'reaction', 'SDTP'),
   g('p-rea-calc', '限时计算', '➕', 'reaction', 'SDTP'),
-  g('p-rea-rps', '剪刀石头布', '✌️', 'reaction', 'SDTP'),
+  g('rps', '剪刀石头布', '✌️', 'reaction', 'SDTP'),
   g('p-rea-color', '颜色反应挑战', '🎨', 'reaction', 'SDTP'),
   g('p-rea-order', '记忆顺序', '🔀', 'reaction', 'SDTP'),
   g('p-rea-diff', '快速找不同', '👀', 'reaction', 'SDTP'),

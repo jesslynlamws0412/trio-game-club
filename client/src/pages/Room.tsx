@@ -13,6 +13,10 @@ import Pick from '../games/Pick';
 import DiceGame from '../games/Dice';
 import NumberGuess from '../games/NumberGuess';
 import Memory from '../games/Memory';
+import Rps from '../games/Rps';
+import Idiom from '../games/Idiom';
+import Truth from '../games/Truth';
+import Reaction from '../games/Reaction';
 import { useAct, type GameProps } from '../games/shared';
 
 const GAME_COMPONENTS: Record<string, (p: GameProps) => JSX.Element> = {
@@ -29,6 +33,11 @@ const GAME_COMPONENTS: Record<string, (p: GameProps) => JSX.Element> = {
   dice: DiceGame,
   number: NumberGuess,
   memory: Memory,
+  truefalse: Pick,
+  rps: Rps,
+  idiom: Idiom,
+  truth: Truth,
+  reaction: Reaction,
 };
 const useActFn = useAct;
 

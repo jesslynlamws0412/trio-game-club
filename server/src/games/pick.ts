@@ -1,23 +1,28 @@
 import type { GameCtx, GameEngine, Result } from './types.js';
 import { rankPoints, shuffle } from './util.js';
 import { LIKELY_PROMPTS, TACIT_QUESTIONS } from '../data/pickBank.js';
+import { TRUE_FALSE } from '../data/partyBank.js';
 
 const ROUNDS = 8;
 const PICK_MS = 25_000;
 const REVEAL_MS = Number(process.env.PICK_REVEAL_MS ?? 4500);
-type Kind = 'likely' | 'tacit';
+type Kind = 'likely' | 'tacit' | 'truefalse';
 type Phase = 'pick' | 'reveal' | 'over';
 
 interface Item {
   q: string;
   /** 选项 id → 显示文字；谁最有可能的选项是玩家（按人数生成） */
   options: { id: string; label: string }[];
+  /** 真假判断才有：正确选项和解释 */
+  answer?: string;
+  why?: string;
 }
 
 /**
  * 同时作答类游戏，两种玩法共用一套流程（每轮所有人秘密选择，全部选完或超时后揭晓）：
  * - likely 谁最有可能：每人投一位其他玩家；投中得票最多者（含并列）的人各得 1 分（站在多数派）。
  * - tacit 默契大考验：每人从选项里选一个；每有 1 位其他玩家和你选得一样，你得 1 分。
+ * - truefalse 真假判断：10 条陈述，判断对错，答对得 1 分，揭晓时给出解释。
  */
 export class PickGame implements GameEngine {
   private ids: string[];
@@ -38,6 +43,13 @@ export class PickGame implements GameEngine {
       this.items = shuffle(LIKELY_PROMPTS)
         .slice(0, ROUNDS)
         .map((q) => ({ q, options: ctx.players.map((p) => ({ id: p.id, label: p.nickname })) }));
+    } else if (kind === 'truefalse') {
+      this.items = shuffle(TRUE_FALSE).slice(0, 10).map((x) => ({
+        q: x.q,
+        options: [{ id: '0', label: '对' }, { id: '1', label: '错' }],
+        answer: x.a ? '0' : '1',
+        why: x.why,
+      }));
     } else {
       this.items = shuffle(TACIT_QUESTIONS)
         .slice(0, ROUNDS)
@@ -74,6 +86,7 @@ export class PickGame implements GameEngine {
       let gain = 0;
       if (mine !== undefined) {
         if (this.kind === 'tacit') gain = this.tally[mine] - 1;
+        else if (this.kind === 'truefalse') gain = mine === this.item.answer ? 1 : 0;
         else if (top > 0 && this.tally[mine] === top) gain = 1;
       }
       this.gains[id] = gain;
@@ -123,6 +136,10 @@ export class PickGame implements GameEngine {
       view.picks = Object.fromEntries(this.ids.map((id) => [id, this.picks.get(id) ?? null]));
       view.tally = this.tally;
       view.gains = this.gains;
+      if (this.kind === 'truefalse') {
+        view.answer = this.item.answer;
+        view.why = this.item.why;
+      }
     }
     return view;
   }

@@ -35,6 +35,7 @@ export function useCountdown(endsInMs: number, resetKey: unknown): number {
 }
 
 export function nameOf(room: RoomView, id: string | null | undefined) {
+  if (id === 'cpu') return '🤖 电脑';
   const p = room.players.find((x) => x.id === id);
   return p ? `${p.avatar} ${p.nickname}` : '?';
 }

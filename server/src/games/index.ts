@@ -11,6 +11,10 @@ import { PickGame } from './pick.js';
 import { DiceGame } from './dice.js';
 import { NumberGame } from './number.js';
 import { MemoryGame } from './memory.js';
+import { RpsGame } from './rps.js';
+import { IdiomGame } from './idiom.js';
+import { TruthGame } from './truth.js';
+import { ReactionGame } from './reaction.js';
 
 const factories: Record<string, (ctx: GameCtx) => GameEngine> = {
   undercover: (c) => new UndercoverGame(c),
@@ -26,6 +30,11 @@ const factories: Record<string, (ctx: GameCtx) => GameEngine> = {
   dice: (c) => new DiceGame(c),
   number: (c) => new NumberGame(c),
   memory: (c) => new MemoryGame(c),
+  truefalse: (c) => new PickGame(c, 'truefalse'),
+  rps: (c) => new RpsGame(c),
+  idiom: (c) => new IdiomGame(c),
+  truth: (c) => new TruthGame(c),
+  reaction: (c) => new ReactionGame(c),
 };
 
 /** 返回 null 表示该游戏尚未实现 */

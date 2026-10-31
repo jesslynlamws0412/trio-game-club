@@ -330,3 +330,13 @@ img, canvas, svg { max-width: 100%; }
 .mem-card.open { background: #fffaf0; color: inherit; }
 .mem-card.done { background: var(--cream-dark); opacity: .7; }
 .mem-card:disabled { cursor: default; }
+
+/* ===== Phase 4 batch 2 ===== */
+.rps-row { display: flex; gap: 8px; justify-content: center; margin: 10px 0; }
+.rps-btn { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center !important; padding: 12px 6px; }
+.rps-icon { font-size: 34px; }
+.react-pad { display: block; width: 100%; height: 150px; margin: 10px 0; font-size: 26px; font-family: var(--font); border: 3px solid var(--brown); border-radius: 8px; cursor: pointer; background: var(--wine); color: var(--cream); }
+.react-pad.go { background: var(--green); animation: none; }
+.react-pad.bad { background: var(--brown-light); }
+.react-pad.rev { background: var(--cream-dark); color: var(--brown); }
+.react-pad:disabled { cursor: default; }
