@@ -7,6 +7,10 @@ export const langAuth = (cb: (data: { lang: string }) => void) => cb({ lang: loa
 
 export const socket = io({ autoConnect: true, auth: langAuth });
 
+/** 服务器隔几秒测一次往返延迟：收到就立刻回执 */
+export const answerLatencyPing = (ack?: () => void) => ack?.();
+socket.on('latency:ping', answerLatencyPing);
+
 /** 本地轮流时第二位玩家使用的连接：切换语言时也要通知服务器 */
 export const extraSockets = new Set<typeof socket>();
 

@@ -45,13 +45,20 @@ const byId = (ps, id) => ps.find((p) => p.state.you === id);
 {
   const ps = await startRoom('draw');
   const seenDrawers = new Set();
+  const drawerCount = {};
+  let lastDrawer = null;
   let totalPoints = 0;
-  for (let round = 0; round < 3; round++) {
+  const TOTAL = ps[0].state.game.totalRounds;
+  assert.equal(TOTAL, 6, '三个人时每人画 2 次，共 6 回合');
+  for (let round = 0; round < TOTAL; round++) {
     const g = ps[0].state.game;
     assert.equal(g.phase, 'drawing');
     assert.equal(g.round, round);
     const drawer = byId(ps, g.drawerId);
     seenDrawers.add(drawer.nick);
+    drawerCount[drawer.nick] = (drawerCount[drawer.nick] ?? 0) + 1;
+    if (round > 0) assert.notEqual(g.drawerId, lastDrawer, '不会连着画两次');
+    lastDrawer = g.drawerId;
     const guessers = ps.filter((p) => p !== drawer);
     const word = drawer.state.game.word;
     assert.ok(word && word.length >= 2);
@@ -107,9 +114,10 @@ const byId = (ps, id) => ps.find((p) => p.state.you === id);
     for (let i = 0; i < 40 && ps[0].state.game.phase === 'reveal'; i++) await wait(50);
   }
   assert.equal(seenDrawers.size, 3);
+  assert.deepEqual(Object.values(drawerCount).sort(), [2, 2, 2], '每人画了 2 次');
   assert.equal(ps[0].state.game.phase, 'over');
   assert.equal(Object.values(ps[0].state.game.points).reduce((a, b) => a + b, 0), totalPoints);
-  ok(`三回合三位画家各一次，总分 ${totalPoints} 分正确`);
+  ok(`六回合三位画家各画两次（轮流、不连画），总分 ${totalPoints} 分正确`);
   assert.ok((await emit(ps[2], 'game:end')).ok);
   await wait();
   assert.equal(ps[0].state.players.reduce((s, p) => s + p.score, 0), totalPoints);

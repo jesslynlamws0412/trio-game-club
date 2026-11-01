@@ -165,7 +165,7 @@ export const GAMES: Record<string, string> = {
 
   // ───── 叠叠高 ─────
   '这一块不能抽（最上面两层、已经抽走的、或者这层只剩一块的都不行）': "That block can't be pulled (not from the top two layers, an empty slot, or the last block of a layer)",
-  '💥 {a} 抽第 {b} 层的积木时，塔倒了！（风险 {c}%）': '💥 The tower fell when {a} pulled from layer {b}! (risk {c}%)',
+  '💥 {a} 抽第 {b} 层的积木时，塔倒了！（风险 {c}%，最先撑不住的是第 {d} 层）': '💥 The tower fell when {a} pulled from layer {b}! (risk {c}%, layer {d} gave way first)',
   '{a} 抽出第 {b} 层的一块，塔还稳稳地立着（风险 {c}%）。': '{a} pulled a block from layer {b} and the tower still stands (risk {c}%).',
   '🎉 塔抽了这么多块还没倒，大家都是高手！': '🎉 The tower survived all those pulls — you are all experts!',
 

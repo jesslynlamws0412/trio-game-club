@@ -325,8 +325,8 @@ img, canvas, svg { max-width: 100%; }
 .guess-log li { display: flex; justify-content: space-between; gap: 8px; padding: 4px 6px; border-bottom: 1px dotted var(--brown-light); }
 .guess-log li.mine { background: var(--cream-dark); }
 .guess-log .digits { letter-spacing: 4px; font-size: 18px; }
-.mem-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; max-width: 360px; margin-inline: auto; }
-.mem-card { aspect-ratio: 1; font-size: 30px; border: 2px solid var(--gold); border-radius: 6px; background: var(--wine); color: var(--gold-light); font-family: var(--font); cursor: pointer; }
+.mem-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin: 12px 0; max-width: 400px; margin-inline: auto; }
+.mem-card { aspect-ratio: 1; font-size: clamp(18px, 6vw, 28px); padding: 0; border: 2px solid var(--gold); border-radius: 6px; background: var(--wine); color: var(--gold-light); font-family: var(--font); cursor: pointer; }
 .mem-card.open { background: #fffaf0; color: inherit; }
 .mem-card.done { background: var(--cream-dark); opacity: .7; }
 .mem-card:disabled { cursor: default; }
@@ -523,3 +523,10 @@ img, canvas, svg { max-width: 100%; }
 .lang-btn { position: fixed; top: 8px; right: 56px; z-index: 35; height: 40px; min-width: 40px; padding: 0 10px; border-radius: 20px; border: 2px solid var(--gold); background: var(--cream); font-family: var(--font); font-size: 14px; font-weight: bold; color: var(--brown); cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,.4); }
 .tag.en-ok { background: #2f6a52; color: #fff; }
 .tag.zh-only { background: #8a6d3b; color: #fff; }
+
+/* 叠叠高：稳定度条和薄弱层 */
+.jenga-stable { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 6px 0; font-size: 14px; }
+.jenga-bar { width: 140px; height: 12px; border: 2px solid #6b4a2b; border-radius: 6px; background: #fffaf0; overflow: hidden; }
+.jenga-bar i { display: block; height: 100%; }
+.jenga-row.weak .jenga-block:not(.gone) { box-shadow: 0 0 0 2px var(--wine); }
+.jenga-block:not(.gone):not(:disabled):active { transform: translateY(1px); }

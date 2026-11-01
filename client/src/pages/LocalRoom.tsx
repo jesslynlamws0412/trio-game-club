@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
-import { extraSockets, langAuth, loadLocal, localSetup, saveLocal, saveSession, setActiveSocket, socket } from '../socket';
+import { answerLatencyPing, extraSockets, langAuth, loadLocal, localSetup, saveLocal, saveSession, setActiveSocket, socket } from '../socket';
 import { t } from '../i18n';
 import type { RoomView } from '../types';
 import Room from './Room';
@@ -58,6 +58,7 @@ export default function LocalRoom({ room, onLeave }: { room: RoomView; onLeave: 
   useEffect(() => {
     const g = io({ forceNew: true, auth: langAuth });
     extraSockets.add(g);
+    g.on('latency:ping', answerLatencyPing);
     setGuest(g);
     g.on('room:state', (v: RoomView) => setGuestView(v));
     let joined = false;

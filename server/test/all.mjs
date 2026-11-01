@@ -80,9 +80,11 @@ try {
   const u = spawnSync(process.execPath, ['--import', 'tsx', path.join(root, 'server/test/monopoly.unit.ts')], { cwd: root, encoding: 'utf8' });
   const um = (u.stdout + u.stderr).match(/全部 (\d+) 项通过/);
   results.push({ name: '大富翁规则单元测试', pass: u.status === 0, count: um ? Number(um[1]) : null, sec: '-', tail: u.status === 0 ? '' : (u.stdout + u.stderr).slice(-600) });
-  const sc = spawnSync(process.execPath, ['--import', 'tsx', path.join(root, 'server/test/scrabble.unit.ts')], { cwd: root, encoding: 'utf8' });
-  const scm = (sc.stdout + sc.stderr).match(/全部 (\d+) 项通过/);
-  results.push({ name: '拼字游戏规则单元测试', pass: sc.status === 0, count: scm ? Number(scm[1]) : null, sec: '-', tail: sc.status === 0 ? '' : (sc.stdout + sc.stderr).slice(-600) });
+  for (const [name, file] of [['拼字游戏规则单元测试', 'scrabble.unit.ts'], ['叠叠高受力模型单元测试', 'jenga.unit.ts'], ['保龄球 / 投篮机精准度单元测试', 'precision.unit.ts']]) {
+    const r = spawnSync(process.execPath, ['--import', 'tsx', path.join(root, 'server/test', file)], { cwd: root, encoding: 'utf8' });
+    const m = (r.stdout + r.stderr).match(/全部 (\d+) 项通过/);
+    results.push({ name, pass: r.status === 0, count: m ? Number(m[1]) : null, sec: '-', tail: r.status === 0 ? '' : (r.stdout + r.stderr).slice(-600) });
+  }
 } finally {
   await stopServer();
 }

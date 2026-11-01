@@ -129,7 +129,9 @@ const turnSock = (list) => list.find((s) => s.state.you === list[0].state.game.t
   assert.equal((await act(s0, { type: 'pull', level: -1, slot: 0 })).ok, false);
   assert.equal((await act(s0, { type: 'pull', level: 0, slot: 5 })).ok, false);
   assert.equal((await act(list.find((s) => s !== s0), { type: 'pull', level: 0, slot: 0 })).ok, false);
-  assert.ok(v.risk[0][0] >= 1 && v.risk[0][0] <= 95);
+  assert.ok(typeof v.risk[0][0] === 'number' && v.risk[0][0] >= 0 && v.risk[0][0] <= 100);
+  assert.equal(v.stability, 100, '完整的塔稳定度 100%');
+  assert.ok(v.risk[0][1] <= v.risk[0][0], '抽中间比抽边上更稳');
   assert.equal(v.risk[top][0], null, '最上面两层不显示风险（不能抽）');
   ok('叠叠高：最上面两层 / 越界 / 不是你的回合都不能抽；能抽的积木显示风险');
 

@@ -31,7 +31,7 @@ export default function Basketball({ room, view, act }: GameProps) {
           : ''}
       </p>
       <div className="court">🏀</div>
-      <MeterBar meter={view.meter} zone={view.shot.w} />
+      <MeterBar meter={view.meter} zone={view.shot.w} frozen={view.last && view.last.pos >= 0 ? view.last.pos : null} />
       {view.phase === 'aim' && (
         <button className="btn primary wide" disabled={!myTurn} onClick={() => act({ type: 'shoot' })}>
           {myTurn ? t('投篮！') : t('等待……')}
@@ -39,7 +39,8 @@ export default function Basketball({ room, view, act }: GameProps) {
       )}
       {view.last && (
         <p className="answer-box">
-          {nameOf(room, view.last.by)}：{view.last.made ? (view.last.swish ? t('🎯 空心球！+{n} 分', { n: view.last.gain }) : t('✅ 进了！+{n} 分', { n: view.last.gain })) : view.last.pos < 0 ? t('⏰ 超时，没有投出去') : t('❌ 没进')}
+          {nameOf(room, view.last.by)}：{view.last.made ? (view.last.swish ? t('🎯 空心球！+{n} 分', { n: view.last.gain }) : t('✅ 进了！+{n} 分', { n: view.last.gain })) : view.last.pos < 0 ? t('⏰ 超时，没有投出去') : view.last.close ? t('😬 差一点！擦着篮筐出去了') : t('❌ 没进')}
+          {view.last.pos >= 0 && <small className="hint"> · {t('离绿区正中 {n}%', { n: view.last.off })} · {t('已补偿延迟 {n} 毫秒', { n: view.last.comp })}</small>}
         </p>
       )}
       <ul className="awards">

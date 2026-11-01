@@ -157,24 +157,14 @@ export const CATALOG: Record<string, string> = {
 
   '18 层积木，每层 3 块。轮流抽出一块（最上面两层不能抽；只剩一块的那一层也不能抽），抽出的积木会放到塔顶。':
     '18 layers of 3 blocks. Pull one block in turn (not from the top two layers, nor from a layer with only one block left); the block you pull goes on top of the tower.',
-  '每次抽积木都有塔倒的风险，积木上会显示百分比：抽得越多越危险；越靠下越危险；一层只剩 2 块时再抽走一块最危险。':
-    'Every pull risks toppling the tower, and each block shows its risk as a percentage: the more pulled, the riskier; the lower, the riskier; taking from a layer with only 2 blocks left is the riskiest.',
-  '抽倒塔的人输（0 分），其余人按抽出的块数排名。抽满 40 块塔还没倒，所有人按块数排名。轮到你 60 秒不抽，系统会替你抽风险最小的一块。':
-    'Whoever topples the tower loses (0 points); the others are ranked by blocks pulled. If 40 blocks are pulled and the tower still stands, everyone is ranked by blocks pulled. If you do nothing for 60 seconds, the system pulls the safest block for you.',
 
   '每人打 10 格，每格最多两球（第 10 格有奖励球最多三球）。轮流打，每人打完一格换下一位。':
     'Each player bowls 10 frames with up to two balls per frame (up to three in the 10th). Players alternate, one frame at a time.',
-  '每次投球，力度条来回摆动，点投球的那一刻指针越靠近正中间，击倒的球瓶越多。指针位置由服务器按时间计算，不能作弊；网络延迟会有一点点偏差。':
-    'The power bar swings back and forth. The closer the pointer is to the centre when you tap Bowl, the more pins fall. The pointer position is computed by the server from the time, so it cannot be cheated; network lag may cause a small error.',
-  '标准计分：全中（Strike）= 10 + 后两球；补中（Spare）= 10 + 后一球。总分最高者获胜：第一 +3、第二 +2、第三 +1。每球限时 15 秒，超时随便扔一球。':
-    'Standard scoring: a Strike = 10 + the next two balls; a Spare = 10 + the next ball. The highest total wins: 1st +3, 2nd +2, 3rd +1. You have 15 seconds per ball; on timeout a random ball is thrown.',
 
   '每人 10 次投篮，轮流投：近距离 3 次、中距离 4 次、三分线 3 次。越远，绿色区域越窄，指针越快。':
     'Each player takes 10 shots in turn: 3 close, 4 mid-range and 3 from the three-point line. The farther the shot, the narrower the green zone and the faster the pointer.',
   '指针经过中间的绿色区域时点投篮：进球得分（近 / 中距离 2 分，三分线 3 分）；落在绿区正中算空心球，再 +1 分。':
     'Tap Shoot while the pointer is in the green zone: a basket scores 2 points (close / mid-range) or 3 (three-point line). Hitting the centre of the zone is a swish: +1 more point.',
-  '指针位置由服务器按时间计算，不能作弊。每次限时 15 秒，超时算没投进。结束后按总分排名：第一 +3、第二 +2、第三 +1。':
-    'The pointer position is computed by the server, so it cannot be cheated. You have 15 seconds per shot; on timeout it counts as a miss. Ranked by total points at the end: 1st +3, 2nd +2, 3rd +1.',
 
   '三层叠起来的 72 张牌，8 种图案各 9 张。点没有被压住的牌，它会进入底部的 7 格托盘；托盘里集齐 3 张相同的就自动消除。':
     '72 tiles stacked in three layers, 9 tiles of each of 8 pictures. Tap a tile that is not covered and it moves to the 7-slot tray; three identical tiles in the tray clear automatically.',
@@ -221,7 +211,7 @@ export const CATALOG: Record<string, string> = {
   '你也可以换牌（牌袋里至少还有 7 张时）或跳过。一人用完牌且牌袋已空，或连续多手没人得分，游戏结束：剩余字母牌的分数会被扣掉。分数最高者获胜：第一 +3、第二 +2、第三 +1。轮到你 60 秒不动，系统会替你跳过。':
     'You may also exchange tiles (when at least 7 remain in the bag) or pass. The game ends when a player empties their rack with the bag empty, or after several scoreless turns in a row; leftover tile values are deducted. Highest score wins: 1st +3, 2nd +2, 3rd +1. If you do nothing for 60 seconds, the system passes for you.',
 
-  '4×4 共 16 张牌，8 对图案，开局全部盖着。': '16 cards in a 4×4 grid, 8 pairs of pictures, all face down at the start.',
+  '6×6 共 36 张牌，18 对图案，开局全部盖着。': '36 cards in a 6×6 grid, 18 pairs of pictures, all face down at the start.',
   '轮到你时翻开两张：图案相同则配对成功，+1 分并继续翻；不同则盖回去，换下一位。':
     'On your turn flip two cards: if they match you score +1 and flip again; if not they are turned back and the next player goes.',
   '所有牌配完后按配对数排名：第一 +3、第二 +2、第三 +1 计入总积分（同分并列）。':
@@ -275,6 +265,14 @@ export const CATALOG: Record<string, string> = {
   '答对第 5 题和第 10 题是保底关：之后答错，也能带走 RM 5,000 / RM 160,000；没过保底关答错则一分没有。': 'Questions 5 and 10 are safe levels: after them, a wrong answer still lets you take home RM 5,000 / RM 160,000; a wrong answer before the first safe level pays nothing.',
   '三个求助各用一次：50:50（去掉两个错误选项）、问观众（观众的票不一定准）、换题。随时可以选择“放弃”，带走当前奖金。每题限时 60 秒，超时按放弃结算。': 'Three lifelines, one use each: 50:50 (removes two wrong options), Ask the Audience (the audience vote is not always right) and Swap Question. You can "Walk away" at any time with your current prize. Each question has a 60-second limit; on timeout you walk away.',
   '所有人都当过参赛者后，按奖金排名：第一 +3、第二 +2、第三 +1。其他人只能当观众（人多时需要耐心等待）。': 'After everyone has been the contestant, players are ranked by prize: 1st +3, 2nd +2, 3rd +1. The others are the audience (with many players you will need some patience).',
+
+  // ───── 叠叠高 / 保龄球 / 投篮机（物理判定和精准度更新后的规则）─────
+  '塔倒不倒由受力决定，不是掷骰子：每一层剩下的积木撑起一个范围，上面所有积木的重心必须落在这个范围里。抽走一层两边的积木、或把一层抽到只剩一块，都会让这一层的“余量”变小。': 'Whether the tower falls is decided by forces, not dice: the blocks left in each layer support a range, and the centre of mass of everything above must stay inside it. Pulling the side blocks of a layer, or leaving only one block in a layer, shrinks that layer’s margin.',
+  '抽积木时手会带动塔：越靠下、压着的重量越大的积木越难抽，塔晃得越厉害，晃动超过余量塔就倒。积木上的百分数 = 抽走它之后塔倒的概率（绿色安全、红色危险），带红框的层最薄弱。': 'Your hand drags the tower as you pull: the lower the block and the more weight on it, the harder it is to pull and the more the tower wobbles — and if the wobble exceeds the margin, it falls. The percentage on a block is the chance of toppling if you pull it (green is safe, red is dangerous); layers with a red outline are the weakest.',
+  '抽倒塔的人输（0 分），其余人按抽出的块数排名。抽满 40 块塔还没倒，所有人按块数排名。轮到你 60 秒不抽，系统会替你抽风险最小的一块。': 'Whoever topples the tower loses (0 points); the others are ranked by blocks pulled. If 40 blocks are pulled and the tower still stands, everyone is ranked by blocks pulled. If you do nothing for 60 seconds, the system pulls the safest block for you.',
+  '每次投球，力度条来回摆动，点投球的那一刻指针越靠近正中间，击倒的球瓶越多。指针位置由服务器按时间计算，并自动补偿你的网络延迟：判定的就是你点下去那一刻在屏幕上看到的位置。指针偏左球走左边、偏右走右边，所以打不准会留下分开的球瓶。': 'The power bar swings back and forth. The closer the pointer is to the centre when you tap Bowl, the more pins fall. The pointer position is computed by the server from the time, and your network delay is compensated automatically: the judgement is the position you saw on screen at the moment you tapped. A pointer left of centre sends the ball left and right of centre sends it right, so sloppy shots leave split pins.',
+  '标准计分：全中（Strike）= 10 + 后两球；补中（Spare）= 10 + 后一球。总分最高者获胜：第一 +3、第二 +2、第三 +1。每球限时 15 秒，超时算脱靶。': 'Standard scoring: a Strike = 10 + the next two balls; a Spare = 10 + the next ball. The highest total wins: 1st +3, 2nd +2, 3rd +1. You have 15 seconds per ball; on timeout the ball misses completely.',
+  '指针位置由服务器按时间计算，并自动补偿你的网络延迟，判定的就是你点下去时看到的位置。擦出绿区边缘会提示“差一点”。每次限时 15 秒，超时算没投进。结束后按总分排名：第一 +3、第二 +2、第三 +1。': 'The pointer position is computed by the server and your network delay is compensated automatically, so the judgement is the position you saw when you tapped. Just missing the green zone shows "so close". You have 15 seconds per shot; on timeout it counts as a miss. Ranked by total points at the end: 1st +3, 2nd +2, 3rd +1.',
 };
 
 /** 已经完整翻译成英文的游戏（房间里有人选英文时，只有这些游戏能开始） */

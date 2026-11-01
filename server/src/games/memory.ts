@@ -1,12 +1,13 @@
 import type { GameCtx, GameEngine, Result } from './types.js';
 import { rankPoints, shuffle } from './util.js';
 
-const SYMBOLS = ['🍎', '🍋', '🍇', '🍒', '🐱', '🐶', '🚗', '⭐'];
+// 18 种图案 → 18 对 → 6×6 共 36 张牌
+const SYMBOLS = ['🍎', '🍋', '🍇', '🍒', '🍓', '🍉', '🐱', '🐶', '🐼', '🦊', '🚗', '🚀', '⭐', '🌙', '🎈', '🔔', '🍀', '🎲'];
 const HIDE_MS = Number(process.env.MEMORY_HIDE_MS ?? 1500);
 type Phase = 'play' | 'hide' | 'over';
 
 /**
- * 记忆翻牌：4×4 共 8 对图案，轮流翻两张。翻到一对 +1 分并继续翻；翻错则牌盖回去，换下一位。
+ * 记忆翻牌：6×6 共 36 张牌、18 对图案，轮流翻两张。翻到一对 +1 分并继续翻；翻错则牌盖回去，换下一位。
  * 未翻开的牌面只存在服务器上，客户端拿不到。
  */
 export class MemoryGame implements GameEngine {

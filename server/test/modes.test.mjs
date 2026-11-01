@@ -97,7 +97,7 @@ ok('未知模式被拒绝');
   await wait();
   const v0 = socks[0].state.game;
   assert.equal(v0.game, 'draw');
-  assert.equal(v0.totalRounds, 2);
+  assert.equal(v0.totalRounds, 6, '两人时每人画 3 次，共 6 回合');
   // 画家与猜词者分别验证：画家不能猜，猜词者不能画
   const drawer = v0.drawerId === socks[0].state.you ? socks[0] : socks[1];
   const guesser = drawer === socks[0] ? socks[1] : socks[0];

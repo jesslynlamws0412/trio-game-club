@@ -426,4 +426,17 @@ export const EN: Record<string, string> = {
   '🏁 放弃了': '🏁 Walked away',
   '最终带走 {n}': 'Took home {n}',
   '当前奖金 {n}': 'Current prize {n}',
+
+  // ───── 精准度更新 ─────
+  '😬 差一点！擦着篮筐出去了': '😬 So close! It rattled out',
+  '离绿区正中 {n}%': '{n}% from the centre of the zone',
+  '已补偿延迟 {n} 毫秒': 'lag compensated: {n} ms',
+  '超时，脱靶': 'Timed out — missed',
+  '精准度 {n}%': 'accuracy {n}%',
+  '最先撑不住的是第 {n} 层。': 'Layer {n} gave way first.',
+  '轮到你了：点一块积木抽出来（数字是抽走它之后塔倒的概率）': 'Your turn: tap a block to pull it out (the number is the chance the tower falls if you do)',
+  '塔的稳定度': 'Tower stability',
+  '最薄弱：第 {n} 层': 'Weakest: layer {n}',
+  '这一层的余量：{n}': 'Margin of this layer: {n}',
+  '提示：抽掉某层两边的积木，或者把一层抽到只剩一块，会让那一层撑不住上面的重量；越靠下压的重量越大，抽的时候塔晃得越厉害。': 'Tip: pulling the side blocks of a layer, or leaving a layer with a single block, makes it unable to hold the weight above; the lower the layer, the more weight it carries and the more the tower wobbles when you pull.',
 };

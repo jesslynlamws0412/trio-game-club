@@ -89,7 +89,7 @@ export default function Bowling({ room, view, act }: GameProps) {
           </div>
         ))}
       </div>
-      <MeterBar meter={view.meter} zone={0.06} />
+      <MeterBar meter={view.meter} zone={view.strikeZone ?? 0.08} frozen={view.last && view.last.pos >= 0 ? view.last.pos : null} />
       {view.phase === 'aim' && (
         <button className="btn primary wide" disabled={!myTurn} onClick={() => act({ type: 'throw' })}>
           {myTurn ? t('投球！') : t('等待……')}
@@ -97,7 +97,8 @@ export default function Bowling({ room, view, act }: GameProps) {
       )}
       {view.last && (
         <p className="answer-box">
-          {nameOf(room, view.last.by)}：{view.last.strike ? t('🎉 全中 Strike！') : view.last.spare ? t('✨ 补中 Spare！') : view.last.gutter ? t('洗澡（一个都没倒）') : t('击倒 {n} 个', { n: view.last.knocked })}
+          {nameOf(room, view.last.by)}：{view.last.strike ? t('🎉 全中 Strike！') : view.last.spare ? t('✨ 补中 Spare！') : view.last.gutter ? (view.last.pos < 0 ? t('超时，脱靶') : t('洗澡（一个都没倒）')) : t('击倒 {n} 个', { n: view.last.knocked })}
+          {view.last.pos >= 0 && <small className="hint"> · {t('精准度 {n}%', { n: view.last.accuracy })} · {t('已补偿延迟 {n} 毫秒', { n: view.last.comp })}</small>}
         </p>
       )}
       {board}

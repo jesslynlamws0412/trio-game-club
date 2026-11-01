@@ -26,10 +26,16 @@ export interface GameCtx {
   notify: () => void;
 }
 
+/** 服务器附带给引擎的操作信息 */
+export interface ActionMeta {
+  /** 这个玩家连接的往返延迟（毫秒，服务器自己测的）。0 = 还没测到 */
+  rttMs: number;
+}
+
 /** 所有游戏都实现这个接口；服务器只通过它与游戏交互。 */
 export interface GameEngine {
   /** 玩家操作：服务器在这里做全部验证 */
-  handleAction(playerId: string, action: any): Result<{ delta?: unknown }>;
+  handleAction(playerId: string, action: any, meta?: ActionMeta): Result<{ delta?: unknown }>;
   /** 只包含该玩家有权看到的信息 */
   viewFor(playerId: string, lang?: 'zh' | 'en'): unknown;
   isOver(): boolean;

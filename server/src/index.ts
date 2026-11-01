@@ -99,7 +99,27 @@ function replyWith(ack: Ack | undefined, res: unknown, lang: Lang, game = 'error
   if (typeof ack === 'function') ack(lang === 'en' && (res as { ok?: boolean })?.ok === false ? translateDeep(res, lang) : res);
 }
 
+/** 这个连接最近几次往返延迟的中位数（毫秒）；还没测到返回 0 */
+function medianRtt(socket: Socket): number {
+  const a: number[] = [...((socket.data.rtts as number[] | undefined) ?? [])].sort((x, y) => x - y);
+  return a.length ? a[Math.floor(a.length / 2)] : 0;
+}
+
 io.on('connection', (socket) => {
+  // 每 1.5 秒测一次往返延迟（客户端收到 latency:ping 立刻回执）。保龄球和投篮机用它补偿网络延迟，让判定和玩家看到的画面一致
+  socket.data.rtts = [] as number[];
+  const ping = () => {
+    const t0 = Date.now();
+    socket.timeout(2000).emit('latency:ping', (err: unknown) => {
+      if (err) return;
+      const a = socket.data.rtts as number[];
+      a.push(Date.now() - t0);
+      if (a.length > 7) a.shift();
+    });
+  };
+  ping();
+  const pinger = setInterval(ping, 1500);
+  socket.on('disconnect', () => clearInterval(pinger));
   socket.data.lang = normLang(socket.handshake.auth?.lang);
   // 这个连接上所有的回复都按它的语言翻译
   const lang = () => socket.data.lang as Lang;
@@ -229,7 +249,7 @@ io.on('connection', (socket) => {
     const c = ctx(socket);
     if (!c) return reply(ack, { ok: false, error: '你不在任何房间中' });
     if (c.room.phase !== 'playing' || !c.room.engine) return reply(ack, { ok: false, error: '当前没有进行中的游戏' });
-    const res = c.room.engine.handleAction(c.player.id, data);
+    const res = c.room.engine.handleAction(c.player.id, data, { rttMs: medianRtt(socket) });
     replyWith(ack, res.ok ? { ok: true } : res, lang(), c.room.currentGame ?? 'errors');
     if (!res.ok) return;
     touchIdle(c.room);

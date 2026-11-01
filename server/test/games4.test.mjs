@@ -220,7 +220,7 @@ async function playMemory(list) {
 {
   const list = await start('trio', 3, 'memory');
   const v = list[0].state.game;
-  assert.equal(v.cards.length, 16);
+  assert.equal(v.cards.length, 36);
   assert.ok(v.cards.every((c) => c === null), '开局所有牌面都不能发给客户端');
   const cur = byTurn(list, v.turnId);
   const notCur = list.find((s) => s !== cur);
@@ -233,9 +233,9 @@ async function playMemory(list) {
   await playMemory(list);
   assert.equal(list[0].state.gameOver, true);
   const pts = list[0].state.game.points;
-  assert.equal(sum(pts), 8);
+  assert.equal(sum(pts), 18, '36 张牌 = 18 对');
   assert.ok(list[0].state.game.matched.every(Boolean));
-  ok(`记忆翻牌：三人打完，8 对全部配完（${Object.values(pts).join(' / ')}）`);
+  ok(`记忆翻牌：三人打完，18 对全部配完（${Object.values(pts).join(' / ')}）`);
   await finish(list);
 
   const solo = await start('solo', 1, 'memory');

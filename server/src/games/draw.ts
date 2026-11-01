@@ -18,7 +18,17 @@ interface Stroke {
 
 const normalize = (s: string) => s.replace(/\s+/g, '').toLowerCase();
 
-/** 你画我猜：三人各当一次画家（共 3 回合）。笔画以增量实时转发，不经过整体状态广播。 */
+/**
+ * 每个人当画家的次数：人少时多画几轮（两人 3 次、3~5 人 2 次、6 人以上 1 次），
+ * 这样总回合数在 6~10 之间。环境变量 DRAW_ROUNDS_PER_PLAYER 可以强制指定（测试用）。
+ */
+export function roundsPerPlayer(players: number): number {
+  const forced = Number(process.env.DRAW_ROUNDS_PER_PLAYER);
+  if (forced >= 1) return Math.floor(forced);
+  return players <= 2 ? 3 : players <= 5 ? 2 : 1;
+}
+
+/** 你画我猜：大家轮流当画家，每人多画几次（见 roundsPerPlayer），笔画以增量实时转发，不经过整体状态广播。 */
 export class DrawGame implements GameEngine {
   private ids: string[];
   private drawOrder: string[];
@@ -36,8 +46,10 @@ export class DrawGame implements GameEngine {
   constructor(private ctx: GameCtx) {
     this.ids = ctx.players.map((p) => p.id);
     const k = ctx.rotation % this.ids.length;
-    this.drawOrder = [...this.ids.slice(k), ...this.ids.slice(0, k)];
-    this.words = shuffle(DRAW_WORDS).slice(0, this.ids.length);
+    const lap = [...this.ids.slice(k), ...this.ids.slice(0, k)];
+    // 轮流画：甲乙丙甲乙丙……，不会连着画两次
+    this.drawOrder = Array.from({ length: roundsPerPlayer(this.ids.length) }, () => lap).flat();
+    this.words = shuffle(DRAW_WORDS).slice(0, this.drawOrder.length);
     for (const id of this.ids) this.points[id] = 0;
     this.startRound();
   }
