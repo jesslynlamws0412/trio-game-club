@@ -469,3 +469,28 @@ img, canvas, svg { max-width: 100%; }
 .sheep-tile.blocked { background: #b9b09a; cursor: default; filter: brightness(.85); }
 .sheep-tray { display: flex; justify-content: center; gap: 3px; margin: 8px 0; padding: 4px; background: var(--brown-light); border-radius: 6px; }
 .sheep-slot { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #fffaf0; border-radius: 4px; font-size: 24px; }
+
+/* 大富翁（40 格） */
+.mono-board { display: grid; grid-template-columns: repeat(11, 1fr); grid-template-rows: repeat(11, 1fr); gap: 1px; aspect-ratio: 1; background: var(--green-dark); padding: 3px; border: 4px solid var(--brown); border-radius: 6px; box-shadow: inset 0 0 0 2px var(--gold), 0 4px 12px rgba(0,0,0,.4); margin: 8px auto; max-width: 560px; }
+.mono-tile { position: relative; background: #fffaf0; border: 1px solid var(--brown-light); padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow: hidden; font-family: var(--font); font-size: clamp(6px, 1.7vw, 10px); line-height: 1.1; text-align: center; min-width: 0; cursor: pointer; color: var(--brown); }
+.mono-tile .band { width: 100%; height: 24%; min-height: 4px; flex: none; }
+.mono-tile .t-name { font-weight: bold; padding: 1px; word-break: break-all; }
+.mono-tile .t-level { font-size: 0.8em; line-height: 1; }
+.mono-tile .t-owner { position: absolute; right: 1px; top: 1px; width: 6px; height: 6px; border-radius: 50%; border: 1px solid #fff; }
+.mono-tile .t-tokens { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; flex-wrap: wrap; }
+.mono-tile.corner, .mono-tile.k-go, .mono-tile.k-jail, .mono-tile.k-parking, .mono-tile.k-gojail { background: var(--cream-dark); }
+.mono-tile.k-chance, .mono-tile.k-fate { background: #f3e1c4; }
+.mono-tile.k-rail, .mono-tile.k-util { background: #ece6d6; }
+.mono-tile.mortgaged { opacity: .45; }
+.mono-tile.hot { outline: 3px solid var(--gold); z-index: 1; }
+.mono-tile.sel { outline: 2px solid var(--wine); z-index: 2; }
+.mono-tile .token { font-size: clamp(8px, 2.2vw, 15px); }
+.mono-center { grid-row: 2 / 11; grid-column: 2 / 11; background: radial-gradient(circle, #2f6a52, var(--green)); color: var(--cream); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 6px; text-align: center; border-radius: 4px; min-height: 0; overflow: hidden; }
+.mono-center .turn { color: var(--gold-light); margin: 0; }
+.mono-center .hint { color: var(--cream-dark); margin: 0; }
+.mono-log { list-style: none; margin: 0; padding: 0; font-size: 12px; color: var(--cream-dark); max-width: 100%; }
+.mono-detail .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
+.rent-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.rent-table td { padding: 2px 4px; border-bottom: 1px dashed var(--brown-light); }
+.rent-table td:last-child { text-align: right; }
+.rent-table tr.now { background: var(--gold-light); font-weight: bold; }

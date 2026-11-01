@@ -52,8 +52,8 @@ export default function Home({ onBack, mode = 'trio' }: { onBack?: () => void; m
     <main className="home">
       <header className="masthead">
         <div className="ornament">❖ ❖ ❖</div>
-        <h1>三人游戏俱乐部</h1>
-        <div className="subtitle">TRIO GAME CLUB · est. 三人成局</div>
+        <h1>复古桌游俱乐部</h1>
+        <div className="subtitle">RETRO BOARD GAME HUB · 单人 · 双人 · 三人 · 多人</div>
       </header>
 
       <section className="paper card">

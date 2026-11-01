@@ -15,9 +15,9 @@ if not exist "%USERPROFILE%\trio-tools\cloudflared\cloudflared.exe" (
   exit /b 1
 )
 
-start "三人游戏俱乐部 - 服务器（不要关）" cmd /k "npm start"
+start "复古桌游俱乐部 - 服务器（不要关）" cmd /k "npm start"
 timeout /t 4 >nul
-start "三人游戏俱乐部 - 公网隧道（不要关）" cmd /k ""%USERPROFILE%\trio-tools\cloudflared\cloudflared.exe" tunnel --url http://localhost:3001 --no-autoupdate"
+start "复古桌游俱乐部 - 公网隧道（不要关）" cmd /k ""%USERPROFILE%\trio-tools\cloudflared\cloudflared.exe" tunnel --url http://localhost:3001 --no-autoupdate"
 
 echo.
 echo 请在“公网隧道”窗口里找一行 https://xxxx.trycloudflare.com ，把它发给朋友。

@@ -227,9 +227,9 @@ async function searchAll(ps) {
   const ps = await startRoom('monopoly');
   const v = () => ps[0].state.game;
   const byId = (i) => ps.find((p) => id(p) === i);
-  assert.equal(v().board.length, 28);
+  assert.equal(v().board.length, 40);
   assert.equal(v().players.length, 3);
-  assert.ok(v().players.every((p) => p.cash === 15000));
+  assert.ok(v().players.every((p) => p.cash === 1500));
   const first = byId(v().turnId);
   const other = ps.find((p) => p !== first);
   assert.equal((await act(other, { type: 'roll' })).ok, false);

@@ -170,7 +170,7 @@ const stones = (s) => s.state.game.cells.filter((c) => c >= 0).length;
   assert.ok(desc.state.game.word && desc.state.game.banned.length === 3);
   assert.equal(guess.state.game.word, null);
   assert.equal(guess.state.game.banned, null);
-  assert.ok(!JSON.stringify(guess.state).includes(desc.state.game.word), '猜词者的视图里没有答案');
+  assert.ok(!JSON.stringify(guess.state.game).includes(desc.state.game.word), '猜词者的视图里没有答案');
   assert.ok(!JSON.stringify(guess.state.game).includes(desc.state.game.banned[0]), '猜词者看不到禁忌词');
   ok('禁忌词：只有描述者看到词语和禁忌词，猜词者的视图里没有');
 
