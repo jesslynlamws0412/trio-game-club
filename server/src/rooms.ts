@@ -5,6 +5,10 @@ import type { GameEngine, Result, RoomSettings } from './games/types.js';
 
 export type { Result };
 
+/** 房主点开始后的倒计时（毫秒）。0 = 立即开始（测试用）。单人和本地轮流房间不倒计时 */
+const COUNTDOWN_MS = Number(process.env.START_COUNTDOWN_MS ?? 3000);
+/** 轮到谁、谁就长时间不动时，多久后自动代替他行动（毫秒） */
+const IDLE_MS = Number(process.env.IDLE_TURN_MS ?? 60_000);
 const MAX_ROOMS = 300; // 公网部署时防止有人批量建房占满内存
 export const RECONNECT_GRACE_MS = 120_000;
 export const AVATARS = [
@@ -46,7 +50,7 @@ export interface Room {
   mode: ModeId;
   hostId: string;
   players: Player[];
-  phase: 'lobby' | 'playing';
+  phase: 'lobby' | 'countdown' | 'playing';
   currentGame: string | null;
   gamesPlayed: number;
   history: { game: string; at: number; results: { nickname: string; avatar: string; points: number }[] }[];
@@ -60,6 +64,10 @@ export interface Room {
   /** 本地轮流：两位玩家共用一台设备。加入需要房主设备持有的密钥，外人不能凭房间号加入 */
   local: boolean;
   localKey: string | null;
+  countdownTimer: NodeJS.Timeout | null;
+  countdownEndsAt: number;
+  idleTimer: NodeJS.Timeout | null;
+  notify: (() => void) | null;
 }
 
 const rooms = new Map<string, Room>();
@@ -128,6 +136,10 @@ export function createRoom(
     gameStartedAt: 0,
     local: local === true,
     localKey: local === true ? randomUUID().slice(0, 12) : null,
+    countdownTimer: null,
+    countdownEndsAt: 0,
+    idleTimer: null,
+    notify: null,
   };
   rooms.set(room.code, room);
   return { ok: true, room, player };
@@ -238,19 +250,87 @@ export function startGame(room: Room, player: Player, notify: () => void): Resul
   if (room.players.some((p) => !p.ready)) return { ok: false, error: '还有玩家没有准备' };
   const gameId = resolveGame(room);
   if (!gameId) return { ok: false, error: '请先选择一个游戏' };
+  room.notify = notify;
+  // 多人联网房间：先倒数几秒，让大家有准备；单人和本地轮流直接开始
+  if (COUNTDOWN_MS > 0 && !room.local && room.players.length >= 2) {
+    room.phase = 'countdown';
+    room.countdownEndsAt = Date.now() + COUNTDOWN_MS;
+    room.countdownTimer = setTimeout(() => {
+      room.countdownTimer = null;
+      if (room.phase === 'countdown') {
+        beginGame(room, gameId);
+        notify();
+      }
+    }, COUNTDOWN_MS);
+    return { ok: true };
+  }
+  beginGame(room, gameId);
+  return { ok: true };
+}
+
+function beginGame(room: Room, gameId: string) {
   room.engine = createEngine(gameId, {
     players: room.players.map((p) => ({ id: p.id, nickname: p.nickname })),
     rotation: room.gamesPlayed,
-    notify,
+    notify: () => room.notify?.(),
     settings: room.settings,
     used: room.usedQuestions,
   });
   room.phase = 'playing';
   room.currentGame = gameId;
   room.gameStartedAt = Date.now();
+  armIdle(room);
+}
+
+/** 房主在倒计时期间取消开始，回到大厅。 */
+export function cancelStart(room: Room, player: Player): Result {
+  if (player.id !== room.hostId) return { ok: false, error: '只有房主可以取消' };
+  if (room.phase !== 'countdown') return { ok: false, error: '现在没有在倒计时' };
+  clearCountdown(room);
+  room.phase = 'lobby';
+  for (const p of room.players) p.ready = false;
   return { ok: true };
 }
 
+function clearCountdown(room: Room) {
+  if (room.countdownTimer) clearTimeout(room.countdownTimer);
+  room.countdownTimer = null;
+}
+
+// ───── 超时自动行动：回合制游戏里有人一直不动时，由服务器代替他做一个保守的选择 ─────
+function clearIdle(room: Room) {
+  if (room.idleTimer) clearTimeout(room.idleTimer);
+  room.idleTimer = null;
+}
+
+function armIdle(room: Room) {
+  clearIdle(room);
+  if (!room.engine?.onIdle || room.phase !== 'playing') return;
+  room.idleTimer = setTimeout(() => {
+    room.idleTimer = null;
+    if (room.phase !== 'playing' || !room.engine || room.engine.isOver()) return;
+    room.engine.onIdle?.();
+    room.notify?.();
+    armIdle(room);
+  }, IDLE_MS);
+}
+
+/** 有玩家成功操作后调用：重新开始计时 */
+export function touchIdle(room: Room) {
+  if (room.phase === 'playing') armIdle(room);
+}
+
+/** 房主关闭房间：所有人回到首页，房间和进行中的游戏都消失。返回被关闭房间里的玩家，由调用方通知他们。 */
+export function closeRoom(room: Room, player: Player): Result<{ players: Player[] }> {
+  if (player.id !== room.hostId) return { ok: false, error: '只有房主可以关闭房间' };
+  clearCountdown(room);
+  clearIdle(room);
+  room.engine?.dispose();
+  room.engine = null;
+  for (const p of room.players) if (p.graceTimer) clearTimeout(p.graceTimer);
+  rooms.delete(room.code);
+  return { ok: true, players: room.players };
+}
 /** 一局正常结束：积分计入本房间的积分榜和本房间战绩（只保存在内存里，房间关闭就没有了）。 */
 function settle(room: Room) {
   if (!room.engine || !room.currentGame) return;
@@ -270,6 +350,7 @@ export function endGame(room: Room, player: Player): Result {
   const finished = room.engine?.isOver() ?? false;
   if (!finished && player.id !== room.hostId) return { ok: false, error: '只有房主可以中止游戏' };
   if (finished) settle(room);
+  clearIdle(room);
   room.engine?.dispose();
   room.engine = null;
   room.phase = 'lobby';
@@ -306,8 +387,13 @@ export function removePlayer(room: Room, player: Player) {
     const next = room.players.find((p) => p.connected) ?? room.players[0];
     room.hostId = next.id;
   }
+  if (room.phase === 'countdown') {
+    clearCountdown(room);
+    room.phase = 'lobby';
+  }
   if (room.phase === 'playing') {
     // 有人离开，本局作废，回到大厅（不计分）
+    clearIdle(room);
     room.engine?.dispose();
     room.engine = null;
     room.phase = 'lobby';
@@ -325,6 +411,8 @@ export function viewFor(room: Room, viewer: Player) {
     you: viewer.id,
     hostId: room.hostId,
     phase: room.phase,
+    countdownMs: room.phase === 'countdown' ? Math.max(0, room.countdownEndsAt - Date.now()) : 0,
+    idleSec: room.engine?.onIdle ? Math.round(IDLE_MS / 1000) : 0,
     mode: room.mode,
     minPlayers: MODE_LIMITS[room.mode].min,
     maxPlayers: MODE_LIMITS[room.mode].max,

@@ -24,7 +24,10 @@ export interface RoomView {
   code: string;
   you: string;
   hostId: string;
-  phase: 'lobby' | 'playing';
+  phase: 'lobby' | 'countdown' | 'playing';
+  countdownMs: number;
+  /** 回合制游戏：轮到的人多少秒不动会被自动代替；0 = 这款游戏没有这个机制 */
+  idleSec: number;
   mode: 'solo' | 'duo' | 'trio' | 'party';
   local: boolean;
   minPlayers: number;

@@ -63,9 +63,24 @@ export class NumberGame implements GameEngine {
       this.over = true;
       return { ok: true };
     }
+    this.advanceTurn();
+    return { ok: true };
+  }
+
+  private advanceTurn() {
     this.turn++; // 跳过已经用完次数的玩家
     for (let k = 0; k < this.order.length && this.used(this.current) >= GUESSES_EACH; k++) this.turn++;
-    return { ok: true };
+  }
+
+  /** 轮到的玩家长时间不动：记一次超时（占用一次猜测机会），换下一位 */
+  onIdle() {
+    if (this.over) return;
+    this.guesses.push({ by: this.current, digits: '····', a: 0, b: 0 });
+    if (this.ids.every((id) => this.used(id) >= GUESSES_EACH)) {
+      this.over = true;
+      return;
+    }
+    this.advanceTurn();
   }
 
   viewFor(pid: string) {

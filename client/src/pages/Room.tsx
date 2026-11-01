@@ -18,7 +18,7 @@ import Rps from '../games/Rps';
 import Idiom from '../games/Idiom';
 import Truth from '../games/Truth';
 import Reaction from '../games/Reaction';
-import { useAct, type GameProps } from '../games/shared';
+import { useAct, useCountdown, type GameProps } from '../games/shared';
 
 const GAME_COMPONENTS: Record<string, (p: GameProps) => JSX.Element> = {
   undercover: Undercover,
@@ -51,6 +51,7 @@ export default function Room({ room, onLeave }: Props) {
   const [error, setError] = useState('');
   const [rulesFor, setRulesFor] = useState<GameInfo | null>(null);
   const [editing, setEditing] = useState(false);
+  const countdown = useCountdown(room.countdownMs ?? 0, room.phase);
 
   const me = room.players.find((p) => p.id === room.you)!;
   const isHost = room.hostId === room.you;
@@ -82,6 +83,9 @@ export default function Room({ room, onLeave }: Props) {
             </>
           )}
           {error && <p className="error">{error}</p>}
+          {room.idleSec > 0 && !room.gameOver && (
+            <p className="hint">⏳ 轮到的玩家 {room.idleSec} 秒不操作，系统会自动替他行动。</p>
+          )}
           <div className="end-bar">
             {room.gameOver ? (
               <button className="btn primary" onClick={() => call('game:end')}>
@@ -113,10 +117,32 @@ export default function Room({ room, onLeave }: Props) {
           <div className="label">房间号</div>
           <div className="room-code">{room.code}</div>
         </div>
-        <button className="btn ghost" onClick={onLeave}>
-          退出房间
-        </button>
+        <div className="head-btns">
+          <button className="btn ghost" onClick={onLeave}>
+            退出房间
+          </button>
+          {isHost && !room.local && (
+            <button className="btn ghost" onClick={() => confirm('关闭房间后所有人都会回到首页，确定吗？') && call('room:close')}>
+              关闭房间
+            </button>
+          )}
+        </div>
       </header>
+
+      {room.phase === 'countdown' && (
+        <div className="modal-back">
+          <div className="modal paper countdown-box">
+            <h2>游戏即将开始</h2>
+            <div className="big-count">{Math.max(1, countdown)}</div>
+            <p className="hint">请准备好，开始后不能再改选游戏。</p>
+            {isHost && (
+              <button className="btn ghost" onClick={() => call('room:cancel')}>
+                取消开始
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       <section className="paper card">
         <h2>

@@ -354,6 +354,15 @@ export class MonopolyGame implements GameEngine {
     }
   }
 
+  /** 轮到的玩家长时间不动：掷骰、放弃购买、结束回合 */
+  onIdle() {
+    if (this.phase === 'over') return;
+    const who = this.cur.id;
+    if (this.phase === 'roll') this.handleAction(who, { type: 'roll' });
+    else if (this.phase === 'buy') this.handleAction(who, { type: 'skip' });
+    else if (this.phase === 'manage') this.handleAction(who, { type: 'end' });
+  }
+
   viewFor(_pid: string) {
     return {
       game: 'monopoly',

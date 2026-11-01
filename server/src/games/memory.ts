@@ -59,6 +59,13 @@ export class MemoryGame implements GameEngine {
     return { ok: true };
   }
 
+  /** 轮到的玩家长时间不动：把翻开的牌盖回去，换下一位 */
+  onIdle() {
+    if (this.phase !== 'play') return;
+    this.up = [];
+    this.turn = (this.turn + 1) % this.ids.length;
+  }
+
   viewFor(_pid: string) {
     return {
       game: 'memory',

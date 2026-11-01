@@ -51,7 +51,7 @@ export default function NumberGuess({ room, view, act }: GameProps) {
           <li key={i} className={g.by === room.you ? 'mine' : ''}>
             <span>{nameOf(room, g.by)}</span>
             <b className="digits">{g.digits}</b>
-            <span>{g.a}A{g.b}B</span>
+            <span>{g.digits === '····' ? '超时，跳过' : g.a + 'A' + g.b + 'B'}</span>
           </li>
         ))}
         {view.guesses.length === 0 && <li className="hint">还没有人猜</li>}

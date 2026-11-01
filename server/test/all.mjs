@@ -11,15 +11,15 @@ const PORT = 3199;
 const URL = `http://localhost:${PORT}`;
 const FAST = {
   QUIZ_REVEAL_MS: '150', DRAW_REVEAL_MS: '200', MONOPOLY_MAX_ROUNDS: '3', PICK_REVEAL_MS: '150', DICE_REVEAL_MS: '150',
-  MEMORY_HIDE_MS: '150', RPS_REVEAL_MS: '150', IDIOM_TURN_MS: '1200', REACTION_DELAY_MS: '400', REACTION_REVEAL_MS: '150',
+  MEMORY_HIDE_MS: '150', RPS_REVEAL_MS: '150', IDIOM_TURN_MS: '1200', REACTION_DELAY_MS: '400', REACTION_REVEAL_MS: '150', START_COUNTDOWN_MS: '0',
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 let server = null;
-async function startServer(dataDir) {
+async function startServer(dataDir, extra = {}) {
   server = spawn(process.execPath, ['--import', 'tsx', 'src/index.ts'], {
     cwd: path.join(root, 'server'),
-    env: { ...process.env, ...FAST, PORT: String(PORT), DATA_DIR: dataDir },
+    env: { ...process.env, ...FAST, PORT: String(PORT), DATA_DIR: dataDir, ...extra },
     stdio: 'ignore',
   });
   for (let i = 0; i < 60; i++) {
@@ -51,8 +51,13 @@ function run(name, file, args = [], { tsx = false, env = {} } = {}) {
 }
 
 try {
-  // 全部测试共用一个全新的服务器
-  let dir;
+  // 倒计时和超时自动行动：用很短的倒计时 / 超时时间单独启动一个服务器
+  let dir = freshDir();
+  await startServer(dir, { START_COUNTDOWN_MS: '500', IDLE_TURN_MS: '700' });
+  run('开始倒计时、关闭房间、超时自动行动', 'flow.test.mjs');
+  await stopServer();
+
+  // 其余全部测试共用一个全新的服务器
   dir = freshDir();
   await startServer(dir);
   run('大厅与房间（三人）', 'lobby.test.mjs');

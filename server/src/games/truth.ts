@@ -70,17 +70,30 @@ export class TruthGame implements GameEngine {
         if (this.votes.has(pid)) return { ok: false, error: '你已经投过票了' };
         if (typeof a.done !== 'boolean') return { ok: false, error: '投票无效' };
         this.votes.set(pid, a.done);
-        if (this.votes.size === this.ids.length - 1) {
-          const yes = [...this.votes.values()].filter(Boolean).length;
-          const done = yes > this.votes.size - yes;
-          if (done) this.points[this.current] += REWARD;
-          this.history.push({ turn: this.turn, playerId: this.current, kind: this.kind!, prompt: this.prompt, done });
-          this.next();
-        }
+        if (this.votes.size === this.ids.length - 1) this.resolveVotes();
         return { ok: true };
       }
       default:
         return { ok: false, error: '未知操作' };
+    }
+  }
+
+  private resolveVotes() {
+    const yes = [...this.votes.values()].filter(Boolean).length;
+    const done = yes > this.votes.size - yes;
+    if (done) this.points[this.current] += REWARD;
+    this.history.push({ turn: this.turn, playerId: this.current, kind: this.kind!, prompt: this.prompt, done });
+    this.next();
+  }
+
+  /** 长时间不动：该选的人当作跳过；没投票的人当作投反对 */
+  onIdle() {
+    if (this.phase === 'choose') {
+      this.history.push({ turn: this.turn, playerId: this.current, kind: 'skip', prompt: null, done: null });
+      this.next();
+    } else if (this.phase === 'judge') {
+      for (const id of this.ids) if (id !== this.current && !this.votes.has(id)) this.votes.set(id, false);
+      this.resolveVotes();
     }
   }
 

@@ -13,6 +13,9 @@ import {
   getRoom,
   joinRoom,
   kickPlayer,
+  cancelStart,
+  closeRoom,
+  touchIdle,
   setSettings,
   removePlayer,
   resumeRoom,
@@ -158,6 +161,25 @@ io.on('connection', (socket) => {
   act('room:vote', (r, p, d) => voteGame(r, p, d?.gameId));
   act('room:start', (r, p) => startGame(r, p, () => broadcast(r)));
   act('game:end', (r, p) => endGame(r, p));
+  act('room:cancel', (r, p) => cancelStart(r, p));
+
+  // 房主关闭房间：所有人收到 room:closed，回到首页
+  on('room:close', (_data, ack) => {
+    const c = ctx(socket);
+    if (!c) return reply(ack, { ok: false, error: '你不在任何房间中' });
+    const res = closeRoom(c.room, c.player);
+    if (!res.ok) return reply(ack, res);
+    for (const p of res.players) {
+      if (!p.socketId) continue;
+      const s = io.sockets.sockets.get(p.socketId);
+      if (s) {
+        s.data.code = undefined;
+        s.data.playerId = undefined;
+      }
+      io.to(p.socketId).emit('room:closed');
+    }
+    reply(ack, { ok: true });
+  });
 
   // 游戏操作：普通操作会向所有人推送各自的视图；带 delta 的高频操作（画笔）只把增量转发给其他玩家
   on('game:action', (data, ack) => {
@@ -167,6 +189,7 @@ io.on('connection', (socket) => {
     const res = c.room.engine.handleAction(c.player.id, data);
     reply(ack, res.ok ? { ok: true } : res);
     if (!res.ok) return;
+    touchIdle(c.room);
     if (res.delta !== undefined) {
       for (const p of c.room.players) {
         if (p.id !== c.player.id && p.socketId) io.to(p.socketId).emit('game:delta', res.delta);

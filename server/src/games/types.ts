@@ -33,5 +33,7 @@ export interface GameEngine {
   isOver(): boolean;
   /** 本局获得的积分（结束后才有意义） */
   scores(): Record<string, number>;
+  /** 轮到的玩家长时间不动时，服务器调用它，由引擎代替他做一个保守的选择（可选） */
+  onIdle?(): void;
   dispose(): void;
 }

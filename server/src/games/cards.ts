@@ -1,4 +1,4 @@
-﻿import type { GameCtx, GameEngine, Result } from './types.js';
+import type { GameCtx, GameEngine, Result } from './types.js';
 import { shuffle } from './util.js';
 import { CARDS, type Card, type Effect } from '../data/cardLibrary.js';
 
@@ -167,6 +167,19 @@ export class CardsGame implements GameEngine {
       if (t.card.secretTask) this.judgements.push(this.newJudgement(t.card, t.playerId, true));
     }
     this.phase = this.judgements.some((j) => !j.resolved) ? 'settle' : 'over';
+  }
+
+  /** 长时间不动：该抽卡的人自动抽卡；没投票的人当作投反对 */
+  onIdle() {
+    if (this.phase === 'draw') {
+      this.handleAction(this.drawerId, { type: 'draw' });
+    } else if (this.phase === 'judge' || this.phase === 'settle') {
+      for (const j of this.judgements.filter((x) => !x.resolved)) {
+        for (const id of this.ids) {
+          if (id !== j.subjectId && j.votes[id] === undefined) this.handleAction(id, { type: 'judge', judgementId: j.id, vote: false });
+        }
+      }
+    }
   }
 
   viewFor(pid: string) {

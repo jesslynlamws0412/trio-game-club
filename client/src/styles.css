@@ -387,3 +387,8 @@ img, canvas, svg { max-width: 100%; }
 .local-opt { margin: 10px 0; padding: 8px 10px; border: 1px dashed var(--brown-light); border-radius: 6px; font-size: 14px; }
 .local-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; padding: 6px 10px; background: var(--gold); color: var(--brown); font-size: 14px; }
 .handoff { text-align: center; padding-top: 28px; padding-bottom: 28px; }
+
+/* ===== 开始倒计时 / 关闭房间 ===== */
+.head-btns { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.countdown-box { text-align: center; }
+.big-count { font-size: 72px; font-weight: 700; color: var(--wine); line-height: 1.1; margin: 8px 0; }

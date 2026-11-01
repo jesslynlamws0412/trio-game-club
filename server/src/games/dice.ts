@@ -80,6 +80,12 @@ export class DiceGame implements GameEngine {
     return { ok: false, error: '未知操作' };
   }
 
+  /** 轮到的玩家长时间不动：有人叫数就替他开，没人叫数就叫最小的一注 */
+  onIdle() {
+    if (this.phase !== 'bid') return;
+    this.handleAction(this.turnId, this.bid ? { type: 'call' } : { type: 'bid', qty: 1, face: 2 });
+  }
+
   private afterReveal() {
     const loser = this.result!.loser;
     const left = this.dice.get(loser)!;
