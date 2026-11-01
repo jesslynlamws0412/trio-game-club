@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { socket } from '../socket';
 import { nameOf, useCountdown, type GameProps } from './shared';
+import { t } from '../i18n';
 
 // 画布逻辑坐标：x、y 都是 0~1000 的整数（服务器也用这个范围），画布显示为 4:3
 const W = 1000;
@@ -166,13 +167,13 @@ export default function Draw({ room, view, act }: GameProps) {
   return (
     <div>
       <h2>
-        🎨 你画我猜 <small>第 {view.round + 1} / {view.totalRounds} 回合</small>
+        🎨 {t('你画我猜')} <small>{t('第 {a} / {b} 回合', { a: view.round + 1, b: view.totalRounds })}</small>
       </h2>
 
       {view.phase !== 'over' && (
         <div className="draw-head">
           <div>
-            画家：<b>{nameOf(room, view.drawerId)}</b>
+            {t('画家：')}<b>{nameOf(room, view.drawerId)}</b>
           </div>
           {drawing && <div className="timer small">{left}</div>}
         </div>
@@ -182,20 +183,20 @@ export default function Draw({ room, view, act }: GameProps) {
         <div className="word-card">
           {isDrawer && drawing && (
             <>
-              <div className="label">请你画</div>
+              <div className="label">{t('请你画')}</div>
               <div className="word">{view.word}</div>
             </>
           )}
           {!isDrawer && drawing && (
             <>
-              <div className="label">提示：{view.category}</div>
+              <div className="label">{t('提示：')}{view.category}</div>
               <div className="word">{'？'.repeat(view.wordLen)}</div>
-              <div className="hint">共 {view.wordLen} 个字</div>
+              <div className="hint">{t('共 {n} 个字', { n: view.wordLen })}</div>
             </>
           )}
           {view.phase === 'reveal' && (
             <>
-              <div className="label">答案是</div>
+              <div className="label">{t('答案是')}</div>
               <div className="word">{view.word}</div>
             </>
           )}
@@ -221,7 +222,7 @@ export default function Draw({ room, view, act }: GameProps) {
             {COLORS.map((c) => (
               <button
                 key={c}
-                aria-label={`颜色 ${c}`}
+                aria-label={t('颜色') + ' ' + c}
                 className={'swatch' + (!eraser && c === color ? ' on' : '')}
                 style={{ background: c }}
                 onClick={() => {
@@ -233,35 +234,35 @@ export default function Draw({ room, view, act }: GameProps) {
           </div>
           <div className="sizes">
             {SIZES.map((s) => (
-              <button key={s} className={'size-btn' + (s === size ? ' on' : '')} onClick={() => setSize(s)} aria-label={`粗细 ${s}`}>
+              <button key={s} className={'size-btn' + (s === size ? ' on' : '')} onClick={() => setSize(s)} aria-label={t('粗细') + ' ' + s}>
                 <span style={{ width: s + 2, height: s + 2 }} />
               </button>
             ))}
           </div>
-          <button className={'btn small ' + (eraser ? 'gold' : 'ghost')} onClick={() => setEraser(!eraser)}>橡皮</button>
-          <button className="btn small ghost" onClick={undo}>撤销</button>
-          <button className="btn small ghost" onClick={clear}>清空</button>
+          <button className={'btn small ' + (eraser ? 'gold' : 'ghost')} onClick={() => setEraser(!eraser)}>{t('橡皮')}</button>
+          <button className="btn small ghost" onClick={undo}>{t('撤销')}</button>
+          <button className="btn small ghost" onClick={clear}>{t('清空')}</button>
         </div>
       )}
 
       {view.phase !== 'over' && (
         <div className="panel">
           <ul className="chat-log">
-            {view.guesses.length === 0 && <li className="hint">还没有人猜词</li>}
+            {view.guesses.length === 0 && <li className="hint">{t('还没有人猜词')}</li>}
             {view.guesses.map((g: any, i: number) => (
               <li key={i} className={g.correct ? 'right-guess' : ''}>
-                <b>{nameOf(room, g.playerId)}</b>：{g.correct ? '🎉 猜对了！' : g.text}
+                <b>{nameOf(room, g.playerId)}</b>：{g.correct ? t('🎉 猜对了！') : g.text}
               </li>
             ))}
           </ul>
           {!isDrawer && drawing && !solvedMe && (
             <div className="chat-input">
-              <input value={guess} maxLength={20} placeholder="输入你的答案" onChange={(e) => setGuess(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitGuess()} />
-              <button className="btn small primary" onClick={submitGuess}>猜！</button>
+              <input value={guess} maxLength={20} placeholder={t('输入你的答案')} onChange={(e) => setGuess(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitGuess()} />
+              <button className="btn small primary" onClick={submitGuess}>{t('猜！')}</button>
             </div>
           )}
-          {solvedMe && drawing && <p className="hint">你已经猜对了，等待其他人……</p>}
-          {isDrawer && drawing && <p className="hint">你是画家，不能说话提示哦。</p>}
+          {solvedMe && drawing && <p className="hint">{t('你已经猜对了，等待其他人……')}</p>}
+          {isDrawer && drawing && <p className="hint">{t('你是画家，不能说话提示哦。')}</p>}
         </div>
       )}
 
@@ -269,11 +270,11 @@ export default function Draw({ room, view, act }: GameProps) {
         {room.players.map((p) => (
           <li key={p.id}>
             <span>{p.avatar} {p.nickname}</span>
-            <b>{view.points[p.id]} 分</b>
+            <b>{t('{n} 分', { n: view.points[p.id] })}</b>
           </li>
         ))}
       </ul>
-      {view.phase === 'over' && <p className="turn">三个回合结束！这些分数会计入总积分榜。</p>}
+      {view.phase === 'over' && <p className="turn">{t('所有回合结束！这些分数会计入总积分榜。')}</p>}
     </div>
   );
 }

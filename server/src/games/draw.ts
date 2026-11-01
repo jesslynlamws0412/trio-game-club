@@ -1,6 +1,7 @@
 import type { GameCtx, GameEngine, Result } from './types.js';
 import { cleanText, shuffle } from './util.js';
 import { DRAW_WORDS } from '../data/drawWords.js';
+import { hasEnglish, tr, wordForms } from '../i18n.js';
 
 const ROUND_MS = 60_000;
 const REVEAL_MS = Number(process.env.DRAW_REVEAL_MS ?? 4000);
@@ -49,7 +50,9 @@ export class DrawGame implements GameEngine {
     const lap = [...this.ids.slice(k), ...this.ids.slice(0, k)];
     // 轮流画：甲乙丙甲乙丙……，不会连着画两次
     this.drawOrder = Array.from({ length: roundsPerPlayer(this.ids.length) }, () => lap).flat();
-    this.words = shuffle(DRAW_WORDS).slice(0, this.drawOrder.length);
+    // 房间里有英文玩家：只抽有英文说法的词（成语没有，所以不会出现）
+    const pool = ctx.english ? DRAW_WORDS.filter(([w]) => hasEnglish(w)) : DRAW_WORDS;
+    this.words = shuffle(pool).slice(0, this.drawOrder.length);
     for (const id of this.ids) this.points[id] = 0;
     this.startRound();
   }
@@ -135,7 +138,8 @@ export class DrawGame implements GameEngine {
         if (this.solved.includes(pid)) return { ok: false, error: '你已经猜对了' };
         const text = cleanText(a.text, 20);
         if (!text) return { ok: false, error: '请输入 1~20 个字' };
-        const correct = normalize(text) === normalize(this.word);
+        // 中文玩家和英文玩家同一局：写中文词或英文词都算对
+        const correct = wordForms(this.word).some((w) => normalize(text) === normalize(w));
         if (this.guesses.length >= 100) this.guesses.shift();
         // 猜对的内容不记录，避免被另一位猜词者直接抄答案
         this.guesses.push({ playerId: pid, text: correct ? null : text, correct });
@@ -152,17 +156,18 @@ export class DrawGame implements GameEngine {
     }
   }
 
-  viewFor(pid: string) {
+  viewFor(pid: string, lang?: 'zh' | 'en') {
     const over = this.phase === 'over';
     const showWord = !over && (pid === this.drawerId || this.phase === 'reveal');
-    const word = over ? '' : this.word;
+    // 提示的字数按这位玩家的语言算（英文玩家看到的是英文单词的字母数）
+    const word = over ? '' : lang === 'en' ? tr(this.word) : this.word;
     return {
       game: 'draw',
       phase: this.phase,
       round: Math.min(this.round, this.drawOrder.length - 1),
       totalRounds: this.drawOrder.length,
       drawerId: over ? null : this.drawerId,
-      word: showWord ? word : null,
+      word: showWord ? (over ? '' : this.word) : null,
       wordLen: [...word].length,
       category: over ? '' : this.words[this.round][1],
       endsInMs: this.phase === 'drawing' ? Math.max(0, this.startedAt + ROUND_MS - Date.now()) : 0,

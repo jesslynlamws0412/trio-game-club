@@ -5,6 +5,14 @@ import { io } from 'socket.io-client';
 import assert from 'node:assert/strict';
 import { EN_GAMES } from '../src/i18n/en/catalog.ts';
 import { BUILTIN } from '../src/bank/index.ts';
+import { tr, hasEnglish } from '../src/i18n.ts';
+import { CONFLICTS } from '../src/i18n/en/index.ts';
+import { DRAW_WORDS } from '../src/data/drawWords.ts';
+import { WORD_PAIRS } from '../src/data/wordPairs.ts';
+import { TABOO } from '../src/data/tabooBank.ts';
+import { DrawGame } from '../src/games/draw.ts';
+import { TabooGame } from '../src/games/taboo.ts';
+import { UndercoverGame } from '../src/games/undercover.ts';
 
 const URL = process.env.URL ?? 'http://localhost:3001';
 const CJK = /[一-鿿]/;
@@ -57,8 +65,8 @@ const idsEn = new Set([...EN_GAMES, ...BANK_EN]);
       assert.equal(CJK.test(g.rules.join('')), false, `${g.id} 规则没翻译完：${g.rules.find((x) => CJK.test(x))}`);
     } else assert.equal(g.en, false);
   }
-  // 多人房间里没有大富翁（只支持三人）、井字棋和五子棋（只支持单人 / 双人）
-  assert.equal(cat.filter((g) => g.en).length, EN_GAMES.length - 3 + BANK_EN.length, '多人房间里支持英文的游戏数量');
+  // 多人房间里没有大富翁、谁是卧底、狼人杀、侦探推理（只支持三人），也没有井字棋和五子棋（只支持单人 / 双人）
+  assert.equal(cat.filter((g) => g.en).length, EN_GAMES.length - 6 + BANK_EN.length, '多人房间里支持英文的游戏数量');
   for (const id of BANK_EN) assert.equal(cat.find((g) => g.id === id)?.en, true, id + ' 应该有英文版');
   for (const id of BANK_ZH_ONLY) assert.equal(cat.find((g) => g.id === id)?.en, false, id + ' 应该仍是仅中文');
   ok(`英文玩家的游戏列表：${cat.length} 款游戏名称全部翻译；${cat.filter((g) => g.en).length} 款有完整英文版并翻译了规则`);
@@ -262,6 +270,136 @@ async function startBank(socks, gameId, mode) {
   ok('英文玩家玩“百万富翁”：连续答对 4 题，题目、选项、分类、解释全是英文');
   await emit(s, 'room:leave');
   s.close();
+}
+
+// ───── 词语类游戏：中英文混合 ─────
+{
+  // 翻译词典里没有互相矛盾的写法
+  assert.deepEqual(CONFLICTS, [], '同一个中文在不同文件里写了不同的英文：' + CONFLICTS.join('；'));
+
+  // 英文玩家在时，词库只抽有英文说法的词（成语没有英文，不会出现）
+  const idioms = DRAW_WORDS.filter(([w]) => !hasEnglish(w)).map(([w]) => w);
+  assert.ok(idioms.length >= 10, '成语这类词没有英文版');
+  const players = [{ id: 'a', nickname: 'A' }, { id: 'b', nickname: 'B' }, { id: 'c', nickname: 'C' }];
+  let sawIdiom = false;
+  for (let i = 0; i < 60; i++) {
+    const d = new DrawGame({ players, rotation: 0, notify: () => {}, english: true });
+    assert.ok(d.words.every(([w]) => hasEnglish(w)), '英文模式的你画我猜里不应有没有英文的词');
+    d.dispose();
+    const z = new DrawGame({ players, rotation: 0, notify: () => {} });
+    if (z.words.some(([w]) => idioms.includes(w))) sawIdiom = true;
+    z.dispose();
+    const t = new TabooGame({ players, rotation: 0, notify: () => {}, english: true });
+    assert.ok(t.deck.every((e) => [e.word, ...e.banned].every(hasEnglish)), '禁忌词挑战的词和禁忌词都要有英文');
+    t.dispose();
+    const u = new UndercoverGame({ players, rotation: 0, notify: () => {}, english: true });
+    assert.ok(hasEnglish(u.civWord) && hasEnglish(u.undWord));
+    u.dispose();
+  }
+  assert.ok(sawIdiom, '全是中文玩家时仍然会抽到成语');
+  const noEnglish = [...new Set(WORD_PAIRS.flat())].filter((w) => !hasEnglish(w));
+  const noTaboo = TABOO.filter((e) => ![e.word, ...e.banned].every(hasEnglish));
+  assert.deepEqual(noEnglish, [], '谁是卧底的词全部有英文：' + noEnglish.join(','));
+  assert.deepEqual(noTaboo, [], '禁忌词的词全部有英文');
+  ok(`英文模式只抽有英文说法的词：你画我猜（${idioms.length} 个成语不会出现）、禁忌词挑战、谁是卧底；全中文时仍有成语；翻译词典没有冲突`);
+
+  // 禁忌词：中英文两种说法都不能说，英文要整个单词匹配
+  const t = new TabooGame({ players: players.slice(0, 2), rotation: 0, notify: () => {}, english: true });
+  t.deck = [{ word: '太阳', banned: ['白天', '热', '光'] }];
+  t.deckIdx = 0;
+  const describer = t.describer;
+  const fouls = () => t.log.filter((e) => e.kind === 'foul').length;
+  t.handleAction(describer, { type: 'hint', text: 'it comes up every morning' });
+  assert.equal(fouls(), 0);
+  t.handleAction(describer, { type: 'hint', text: 'a photograph of the sky' }); // photograph 里有 hot？没有；photo 里有 hot —— 不能误判
+  assert.equal(fouls(), 0, '“hot” 不会误伤 “photograph”');
+  t.handleAction(describer, { type: 'hint', text: 'it is very HOT' });
+  assert.equal(fouls(), 1, '英文禁忌词不分大小写');
+  t.handleAction(describer, { type: 'hint', text: 'the Sun is far away' });
+  assert.equal(fouls(), 2, '英文的词本身也不能说');
+  t.handleAction(describer, { type: 'hint', text: '一个很亮的太阳' });
+  assert.equal(fouls(), 3, '中文的词本身也不能说');
+  t.dispose();
+  const t2 = new TabooGame({ players: players.slice(0, 2), rotation: 0, notify: () => {} });
+  t2.deck = [{ word: '太阳', banned: ['白天', '热', '光'] }];
+  const other = t2.ids.find((id) => id !== t2.describer);
+  assert.ok(t2.handleAction(other, { type: 'guess', text: ' sun ' }).ok);
+  assert.equal(t2.solvedBy, other, '猜英文单词也算对（不分大小写和空格）');
+  t2.dispose();
+  ok('禁忌词挑战：中英文两种说法都不能说（英文整词匹配、不分大小写，不会把 “photograph” 当成 “hot”），猜中文词或英文词都算对');
+
+  // 谁是卧底：不能说出自己的词（中英文）
+  const u = new UndercoverGame({ players, rotation: 0, notify: () => {}, english: true });
+  u.civWord = '牛奶';
+  u.undWord = '豆浆';
+  u.undercoverId = 'a';
+  const first = u.order[0];
+  const mine = u.wordOf(first);
+  assert.equal(u.handleAction(first, { type: 'describe', text: 'i drink ' + tr(mine).toUpperCase() + ' daily' }).ok, false, '说出英文词不行');
+  assert.equal(u.handleAction(first, { type: 'describe', text: '我每天都喝' + mine }).ok, false, '说出中文词不行');
+  assert.ok(u.handleAction(first, { type: 'describe', text: 'white and good for breakfast' }).ok);
+  u.dispose();
+  ok('谁是卧底：描述里说出自己的词（中文或英文，不分大小写）会被拒绝');
+}
+{
+  // 你画我猜：中英文玩家同一局，写对方语言的词也算对
+  const a = await mk('zh');
+  const b = await mk('en');
+  const r = await emit(a, 'room:create', { nickname: 'Zed', avatar: '🦊', mode: 'duo' });
+  assert.ok((await emit(b, 'room:join', { code: r.code, nickname: 'Eve', avatar: '🐻' })).ok);
+  for (const x of [a, b]) await emit(x, 'room:vote', { gameId: 'draw' });
+  for (const x of [a, b]) await emit(x, 'room:ready', { ready: true });
+  await wait(80);
+  assert.ok((await emit(a, 'room:start')).ok);
+  await until(() => a.state.phase === 'playing' && b.state.phase === 'playing', 4000, '开始');
+  const drawer = a.state.game.drawerId === a.state.you ? a : b;
+  const guesser = drawer === a ? b : a;
+  const shown = drawer.state.game.word;
+  assert.ok(shown && (drawer === a ? CJK.test(shown) : !CJK.test(shown)), '画家看到自己语言的词：' + shown);
+  const pair = DRAW_WORDS.find(([zh]) => zh === shown || tr(zh) === shown);
+  assert.ok(pair, '词在词库里');
+  const guessWord = guesser === a ? pair[0] : tr(pair[0]); // 猜词的人写自己的语言
+  assert.equal(CJK.test(guessWord), guesser === a);
+  assert.ok(!JSON.stringify(guesser.state.game).includes(shown), '猜词者的视图里没有答案');
+  const rr = await emit(guesser, 'game:action', { type: 'guess', text: guessWord });
+  assert.ok(rr.ok, JSON.stringify(rr));
+  await until(() => a.state.game.phase === 'reveal', 3000, '猜对后揭晓');
+  assert.equal(a.state.game.word === shown || a.state.game.word === pair[0], true);
+  assert.ok(!CJK.test(b.state.game.word), '英文玩家揭晓时看到英文词：' + b.state.game.word);
+  assert.ok(CJK.test(a.state.game.word), '中文玩家揭晓时看到中文词：' + a.state.game.word);
+  // 提示的字数按各自语言算
+  assert.ok(b.state.game.wordLen === [...tr(pair[0])].length && a.state.game.wordLen === [...pair[0]].length, '字数提示按各自语言算');
+  ok(`你画我猜（中英文同局）：画家看到自己语言的词（“${shown}”），对方用自己的语言写出同一个词就算猜对；揭晓时各看各的语言`);
+  await emit(a, 'room:leave');
+  await emit(b, 'room:leave');
+  a.close();
+  b.close();
+}
+{
+  // 真假判断 / 默契大考验 / 谁最有可能：英文玩家的题目全是英文
+  for (const [gameId, mode, n] of [['truefalse', 'solo', 1], ['tacit', 'duo', 2], ['likely', 'trio', 3]]) {
+    const socks = await Promise.all(Array.from({ length: n }, () => mk('en')));
+    const r = await emit(socks[0], 'room:create', { nickname: 'E0', avatar: '🦊', mode });
+    for (let i = 1; i < n; i++) await emit(socks[i], 'room:join', { code: r.code, nickname: 'E' + i, avatar: '🐻' });
+    for (const x of socks) await emit(x, 'room:vote', { gameId });
+    for (const x of socks) await emit(x, 'room:ready', { ready: true });
+    await wait(80);
+    assert.ok((await emit(socks[0], 'room:start')).ok, gameId);
+    await until(() => socks[0].state.game?.question, 4000, gameId + ' 第一题');
+    assert.ok(noCjk(socks[0].state.game), gameId + ' 的题目视图里不应有中文：' + JSON.stringify(socks[0].state.game).slice(0, 200));
+    // 答完一题，看揭晓（解释）也是英文
+    for (const x of socks) {
+      const opt = x.state.game.options.find((o) => o.id !== x.state.you) ?? x.state.game.options[0];
+      await emit(x, 'game:action', { type: 'pick', round: 0, option: opt.id });
+    }
+    await until(() => socks[0].state.game.phase === 'reveal', 3000, gameId + ' 揭晓');
+    assert.ok(noCjk(socks[0].state.game), gameId + ' 揭晓后的视图里不应有中文');
+    for (const x of socks) {
+      await emit(x, 'room:leave');
+      x.close();
+    }
+  }
+  ok('英文玩家玩“真假判断”“默契大考验”“谁最有可能”：题目、选项、解释全是英文');
 }
 
 // ───── 漏翻审计：整个测试过程中，英文游戏发出去的所有文字 ─────

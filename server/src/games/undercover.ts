@@ -1,6 +1,7 @@
 import type { GameCtx, GameEngine, GamePlayer, Result } from './types.js';
 import { cleanText, randomItem, shuffle } from './util.js';
 import { WORD_PAIRS } from '../data/wordPairs.js';
+import { hasEnglish, mentions, wordForms } from '../i18n.js';
 
 const DISCUSS_MS = 90_000;
 type Phase = 'describe' | 'discuss' | 'vote' | 'over';
@@ -31,7 +32,8 @@ export class UndercoverGame implements GameEngine {
   constructor(private ctx: GameCtx) {
     this.ids = ctx.players.map((p: GamePlayer) => p.id);
     this.undercoverId = this.ids[ctx.rotation % this.ids.length];
-    const [a, b] = randomItem(WORD_PAIRS);
+    // 房间里有英文玩家：只抽两个词都有英文说法的
+    const [a, b] = randomItem(ctx.english ? WORD_PAIRS.filter(([x, y]) => hasEnglish(x) && hasEnglish(y)) : WORD_PAIRS);
     [this.civWord, this.undWord] = Math.random() < 0.5 ? [a, b] : [b, a];
     this.order = shuffle(this.ids);
   }
@@ -48,7 +50,7 @@ export class UndercoverGame implements GameEngine {
         if (this.order[this.turn] !== pid) return { ok: false, error: '还没轮到你' };
         const text = cleanText(a.text, 40);
         if (!text) return { ok: false, error: '描述需要 1~40 个字' };
-        if (text.includes(this.wordOf(pid))) return { ok: false, error: '不能直接说出你的词语' };
+        if (wordForms(this.wordOf(pid)).some((w) => mentions(text, w))) return { ok: false, error: '不能直接说出你的词语' };
         this.descriptions.push({ round: this.round, playerId: pid, text });
         this.turn++;
         if (this.turn >= this.order.length) this.startDiscuss();

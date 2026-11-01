@@ -5,7 +5,8 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Server, type Socket } from 'socket.io';
 import { PLATFORM } from './games/platform.js';
-import { audit, normLang, recordAudit, translateDeep, type Lang } from './i18n.js';
+import { audit, hasEnglish, normLang, recordAudit, translateDeep, type Lang } from './i18n.js';
+import { DRAW_WORDS } from './data/drawWords.js';
 import { BANKS, BUILTIN, bankStats } from './bank/index.js';
 import {
   RECONNECT_GRACE_MS,
@@ -47,6 +48,8 @@ function zhOnlyQuestionText() {
       if (q.en) continue;
       for (const s of [q.q, q.explain, q.image ?? '', ...(q.options ?? []), ...(Array.isArray(q.answer) ? q.answer.filter((x) => typeof x === 'string') : [])]) zhOnlyText.add(s as string);
     }
+    // 没有英文说法的画画词（成语）只会出给中文玩家
+    for (const [w, cat] of DRAW_WORDS) if (!hasEnglish(w)) zhOnlyText.add(w).add(cat);
   }
   return zhOnlyText;
 }

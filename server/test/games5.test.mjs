@@ -139,7 +139,7 @@ const nextSafe = (cur, used) =>
   const first = nextSafe(v.current, used) ?? next(v.current, used);
   assert.ok((await act(cur, { type: 'say', text: first })).ok);
   used.add(first);
-  await wait(80);
+  for (let i = 0; i < 60 && A.state.game.current !== first; i++) await wait(50);
   assert.ok([1, 3].includes(A.state.game.points[cur.state.you]), '接对 +1（若接完无路可走再 +2）');
   assert.equal(A.state.game.current, first);
   ok('接对一个成语 +1 分，轮到对方');

@@ -13,7 +13,7 @@ export const CATALOG: Record<string, string> = {
   '掷骰买地，收租破产': 'Roll, buy property, collect rent, go bankrupt',
   '抽卡游戏': 'Card Draw',
   '命运、任务、惩罚与特殊事件': 'Fate, quests, punishments and special events',
-  '海龟汤': 'Lateral Thinking Puzzles',
+  '海龟汤': 'Albatross Soup',
   '主持人出题，其余玩家是非题推理': 'The host sets a puzzle; others ask yes/no questions',
   '侦探推理': 'Detective',
   '搜集线索，找出真凶与动机': 'Collect clues to find the culprit and motive',
@@ -279,4 +279,5 @@ export const CATALOG: Record<string, string> = {
 export const EN_GAMES = [
   'monopoly', 'uno', 'jenga', 'bowling', 'basketball', 'sheep', 'snakes', 'ludo', 'tictactoe', 'gomoku',
   'scrabble', 'memory', 'dice', 'number', 'rps', 'reaction',
+  'undercover', 'draw', 'taboo', 'likely', 'tacit', 'truefalse', 'werewolf', 'detective', 'turtlesoup',
 ];

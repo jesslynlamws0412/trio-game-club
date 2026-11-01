@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AwardList, nameOf, useCountdown, type GameProps } from './shared';
+import { t } from '../i18n';
 
 export default function Taboo({ room, view, act }: GameProps) {
   const [text, setText] = useState('');
@@ -8,17 +9,17 @@ export default function Taboo({ room, view, act }: GameProps) {
   if (view.phase === 'over') {
     return (
       <div>
-        <h2>🚫 禁忌词挑战 · 最终排名</h2>
+        <h2>🚫 {t('禁忌词挑战')} · {t('最终排名')}</h2>
         <ol className="rank">
           {view.ranking.map((r: any) => (
             <li key={r.id}>
               <span className="medal">{['🥇', '🥈', '🥉'][r.rank - 1]}</span>
               <span>{nameOf(room, r.id)}</span>
-              <span className="score">{r.points} 分</span>
+              <span className="score">{t('{n} 分', { n: r.points })}</span>
             </li>
           ))}
         </ol>
-        <p className="hint">名次奖励（第一 +3 / 第二 +2 / 第三 +1）：</p>
+        <p className="hint">{t('名次奖励（第一 +3 / 第二 +2 / 第三 +1）：')}</p>
         <AwardList room={room} />
       </div>
     );
@@ -35,35 +36,35 @@ export default function Taboo({ room, view, act }: GameProps) {
 
   return (
     <div>
-      <h2>🚫 禁忌词挑战 <small>第 {view.round + 1} / {view.total} 回合</small></h2>
+      <h2>🚫 {t('禁忌词挑战')} <small>{t('第 {a} / {b} 回合', { a: view.round + 1, b: view.total })}</small></h2>
       {!revealing && <div className="timer">{left}</div>}
       <p className="question">
-        描述者：<b>{nameOf(room, view.describerId)}</b>
-        {me && !revealing && <>　你的词语：<b className="taboo-word">{view.word}</b></>}
+        {t('描述者：')}<b>{nameOf(room, view.describerId)}</b>
+        {me && !revealing && <>　{t('你的词语：')}<b className="taboo-word">{view.word}</b></>}
       </p>
       {me && !revealing && (
         <p className="hint">
-          禁忌词：{view.banned.map((b: string) => <span key={b} className="taboo-ban">{b}</span>)}
-          违规 {view.fouls} / {view.maxFouls}（描述里不能出现词语本身或禁忌词）
+          {t('禁忌词：')}{view.banned.map((b: string) => <span key={b} className="taboo-ban">{b}</span>)}
+          {t('违规 {a} / {b}（描述里不能出现词语本身或禁忌词）', { a: view.fouls, b: view.maxFouls })}
         </p>
       )}
-      {!me && !revealing && <p className="hint">词语一共 {view.wordLen} 个字。根据描述者的提示，输入你的答案。</p>}
+      {!me && !revealing && <p className="hint">{t('词语一共 {n} 个字。根据描述者的提示，输入你的答案。', { n: view.wordLen })}</p>}
       {revealing && (
         <p className="answer-box">
-          答案：<b>{view.word}</b>　禁忌词：{view.banned?.join('、')}
+          {t('答案：')}<b>{view.word}</b>　{t('禁忌词：')}{view.banned?.join(', ')}
           <br />
-          {view.solvedBy ? `🎉 ${nameOf(room, view.solvedBy)} 猜对了！` : '这个回合没有人猜对。'}
+          {view.solvedBy ? '🎉 ' + t('{name} 猜对了！', { name: nameOf(room, view.solvedBy) }) : t('这个回合没有人猜对。')}
         </p>
       )}
 
       <ul className="chat-log">
-        {view.log.length === 0 && <li className="hint">还没有人发言</li>}
+        {view.log.length === 0 && <li className="hint">{t('还没有人发言')}</li>}
         {view.log.map((e: any, i: number) => (
           <li key={i} className={e.by === room.you ? 'mine' : ''}>
             <b>{nameOf(room, e.by)}</b>
-            {e.kind === 'hint' && <>（描述）：{e.text}</>}
-            {e.kind === 'guess' && <>（猜）：{e.text}</>}
-            {e.kind === 'foul' && <> 说了禁忌词，被扣 1 分！</>}
+            {e.kind === 'hint' && <>{t('（描述）：')}{e.text}</>}
+            {e.kind === 'guess' && <>{t('（猜）：')}{e.text}</>}
+            {e.kind === 'foul' && <> {t('说了禁忌词，被扣 1 分！')}</>}
           </li>
         ))}
       </ul>
@@ -73,12 +74,12 @@ export default function Taboo({ room, view, act }: GameProps) {
           <input
             value={text}
             maxLength={me ? 40 : 20}
-            placeholder={me ? '用文字描述这个词（不能含禁忌词）' : '输入你猜的词语'}
+            placeholder={me ? t('用文字描述这个词（不能含禁忌词）') : t('输入你猜的词语')}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submit()}
           />
-          <button className="btn small primary" onClick={submit}>{me ? '发送' : '猜'}</button>
-          {me && <button className="btn small ghost" onClick={() => confirm('换一个词要扣 1 分，确定吗？') && act({ type: 'swap' })}>换词 -1</button>}
+          <button className="btn small primary" onClick={submit}>{me ? t('发送') : t('猜')}</button>
+          {me && <button className="btn small ghost" onClick={() => confirm(t('换一个词要扣 1 分，确定吗？')) && act({ type: 'swap' })}>{t('换词 -1')}</button>}
         </div>
       )}
 
@@ -86,7 +87,7 @@ export default function Taboo({ room, view, act }: GameProps) {
         {room.players.map((p) => (
           <li key={p.id}>
             <span>{p.avatar} {p.nickname}{view.describerId === p.id ? ' 🗣️' : ''}</span>
-            <b>{view.points[p.id]} 分</b>
+            <b>{t('{n} 分', { n: view.points[p.id] })}</b>
           </li>
         ))}
       </ul>

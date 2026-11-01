@@ -73,6 +73,26 @@ export function tr(text: string): string {
   return out;
 }
 
+/** 这个中文词有没有英文说法（没有的词不会出给英文玩家，比如成语） */
+export const hasEnglish = (zh: string) => !CJK.test(tr(zh));
+
+/** 一个词的所有说法：中文原词，以及有英文时的英文词 */
+export const wordForms = (zh: string): string[] => {
+  const en = tr(zh);
+  return CJK.test(en) ? [zh] : [zh, en];
+};
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * 一段文字里有没有说出这个词（不分大小写）。
+ * 中文直接看有没有包含；英文要整个单词匹配（“hot”不会匹配到“photo”）。
+ */
+export function mentions(text: string, form: string): boolean {
+  if (CJK.test(form)) return text.includes(form);
+  return new RegExp('(^|[^a-z0-9])' + escapeRe(form.toLowerCase()) + '([^a-z0-9]|$)').test(text.toLowerCase());
+}
+
 /** 玩家自己输入的文字（昵称）不翻译 */
 const SKIP_KEYS = new Set(['nickname', 'shown', 'myText']); // 玩家自己输入的文字（昵称、填空题的答案）不翻译
 
@@ -82,13 +102,19 @@ export function translateDeep<T>(value: T, lang: Lang): T {
   return walk(value) as T;
 }
 
+/** 玩家发言 / 提问 / 提示 / 猜词：带 playerId 的发言，或者 kind 是 hint / guess / q 的记录里的 text，是玩家自己输入的，不翻译 */
+function isPlayerText(k: string, o: Record<string, unknown>) {
+  return k === 'text' && ('playerId' in o || o.kind === 'hint' || o.kind === 'guess' || o.kind === 'q');
+}
+
 function walk(v: unknown): unknown {
   if (typeof v === 'string') return tr(v);
   if (Array.isArray(v)) return v.map(walk);
   if (v && typeof v === 'object') {
     if (v instanceof Set || v instanceof Map) return v;
+    const o = v as Record<string, unknown>;
     const out: Record<string, unknown> = {};
-    for (const [k, x] of Object.entries(v as Record<string, unknown>)) out[k] = SKIP_KEYS.has(k) ? x : walk(x);
+    for (const [k, x] of Object.entries(o)) out[k] = SKIP_KEYS.has(k) || isPlayerText(k, o) ? x : walk(x);
     return out;
   }
   return v;
@@ -101,7 +127,8 @@ export function untranslated(value: unknown, found = new Set<string>()): Set<str
   } else if (Array.isArray(value)) {
     for (const x of value) untranslated(x, found);
   } else if (value && typeof value === 'object') {
-    for (const [k, x] of Object.entries(value as Record<string, unknown>)) if (!SKIP_KEYS.has(k)) untranslated(x, found);
+    const o = value as Record<string, unknown>;
+    for (const [k, x] of Object.entries(o)) if (!SKIP_KEYS.has(k) && !isPlayerText(k, o)) untranslated(x, found);
   }
   return found;
 }

@@ -216,9 +216,10 @@ const stones = (s) => s.state.game.cells.filter((c) => c >= 0).length;
 
   // 打完剩下 3 个回合：每回合描述者都直接把词告诉对方（测试用），对方猜对
   for (let r = 1; r < 4; r++) {
-    await until(() => list[0].state.game.round === r && list[0].state.game.phase === 'play', 4000, '下一回合');
+    await until(() => list.every((s) => s.state.game.round === r && s.state.game.phase === 'play'), 4000, '下一回合');
     const d = list.find((s) => s.state.you === list[0].state.game.describerId);
     const gs = list.find((s) => s !== d);
+    await until(() => typeof d.state.game.word === 'string', 2000, '描述者看到词');
     assert.ok((await act(gs, { type: 'guess', text: d.state.game.word })).ok);
     await wait(60);
   }

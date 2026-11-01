@@ -145,7 +145,7 @@ const turnSock = (list) => list.find((s) => s.state.you === list[0].state.game.t
     assert.ok(best, '总有能抽的积木');
     const total0 = w.total;
     assert.ok((await act(s, { type: 'pull', level: best[0], slot: best[1] })).ok);
-    await wait(12);
+    await until(() => list[0].state.game.over || list[0].state.game.total === total0 + 1, 3000, '抽完后状态更新');
     const x = list[0].state.game;
     if (!x.over) {
       assert.equal(x.total, total0 + 1);

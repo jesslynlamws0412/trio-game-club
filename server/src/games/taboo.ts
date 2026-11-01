@@ -1,6 +1,7 @@
 import type { GameCtx, GameEngine, Result } from './types.js';
 import { cleanText, rankPoints, shuffle } from './util.js';
 import { TABOO } from '../data/tabooBank.js';
+import { hasEnglish, mentions, wordForms } from '../i18n.js';
 
 const ROUND_MS = 60_000;
 const REVEAL_MS = Number(process.env.TABOO_REVEAL_MS ?? 4000);
@@ -34,7 +35,8 @@ export class TabooGame implements GameEngine {
     const k = ctx.rotation % this.ids.length;
     const rot = [...this.ids.slice(k), ...this.ids.slice(0, k)];
     this.order = this.ids.length === 2 ? [...rot, ...rot] : rot.slice(0, 8);
-    this.deck = shuffle(TABOO);
+    // 房间里有英文玩家：只抽词和禁忌词都有英文说法的
+    this.deck = shuffle(ctx.english ? TABOO.filter((e) => [e.word, ...e.banned].every(hasEnglish)) : TABOO);
     for (const id of this.ids) this.points[id] = 0;
     this.startRound();
   }
@@ -79,7 +81,8 @@ export class TabooGame implements GameEngine {
   private violates(text: string): boolean {
     const t = norm(text);
     const { word, banned } = this.entry;
-    return [word, ...banned].some((w) => t.includes(norm(w)));
+    // 中英文两种说法都不能说（英文要整个单词匹配）
+    return [word, ...banned].some((w) => wordForms(w).some((f) => (/[\u4e00-\u9fff]/.test(f) ? t.includes(norm(f)) : mentions(text, f))));
   }
 
   handleAction(pid: string, a: any): Result {
@@ -106,7 +109,7 @@ export class TabooGame implements GameEngine {
         if (isDescriber) return { ok: false, error: '描述者不能猜' };
         const text = cleanText(a.text, 20);
         if (!text) return { ok: false, error: '请输入 1~20 个字' };
-        if (norm(text) === norm(this.entry.word)) {
+        if (wordForms(this.entry.word).some((w) => norm(text) === norm(w))) {
           this.solvedBy = pid;
           this.points[pid] += 3;
           this.points[this.describer] += 2;
