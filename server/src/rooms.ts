@@ -250,6 +250,8 @@ export function startGame(room: Room, player: Player, notify: () => void): Resul
   if (room.players.some((p) => !p.ready)) return { ok: false, error: '还有玩家没有准备' };
   const gameId = resolveGame(room);
   if (!gameId) return { ok: false, error: '请先选择一个游戏' };
+  const cap = findGame(gameId)?.maxPlayers;
+  if (cap && room.players.length > cap) return { ok: false, error: `这个游戏最多 ${cap} 人，现在房间里有 ${room.players.length} 人` };
   room.notify = notify;
   // 多人联网房间：先倒数几秒，让大家有准备；单人和本地轮流直接开始
   if (COUNTDOWN_MS > 0 && !room.local && room.players.length >= 2) {

@@ -65,7 +65,7 @@ const MAX: Record<ModeId, number> = { solo: 1, duo: 2, trio: 3, party: 8 };
 const LIVE = new Set([
   'undercover', 'draw', 'quiz', 'werewolf', 'monopoly', 'cards', 'turtlesoup', 'detective',
   'likely', 'tacit', 'dice', 'number', 'memory',
-  'truefalse', 'rps', 'idiom', 'truth', 'reaction', 'tictactoe', 'gomoku', 'taboo',
+  'truefalse', 'rps', 'idiom', 'truth', 'reaction', 'tictactoe', 'gomoku', 'taboo', 'snakes', 'ludo', 'millionaire', 'liar',
   ...QUIZ_GAMES.map((q) => q.id),
 ]);
 
@@ -84,7 +84,7 @@ function g(id: string, name: string, icon: string, category: string, codes: stri
     modes,
     liveModes: ready ? (findGame(id)?.modes ?? ['trio']) : [],
     minPlayers: Math.min(...modes.map((m) => MIN[m])),
-    maxPlayers: Math.max(...modes.map((m) => MAX[m])),
+    maxPlayers: Math.min(findGame(id)?.maxPlayers ?? 99, Math.max(...modes.map((m) => MAX[m]))),
     ready,
     local: ready && !!findGame(id)?.local,
   };
@@ -122,6 +122,8 @@ export const PLATFORM_GAMES: PlatformGame[] = [
   g('werewolf', '三人狼人杀', '🐺', 'puzzle', 'T'),
   // D 经典桌游
   g('gomoku', '五子棋', '⚫', 'classic', 'SD'),
+  g('snakes', '蛇梯棋', '🐍', 'classic', 'DTP'),
+  g('ludo', '飞行棋', '✈️', 'classic', 'DTP'),
   g('tictactoe', '井字棋', '❌', 'classic', 'SD'),
   g('p-cls-chess', '国际象棋', '♞', 'classic', 'SD'),
   g('memory', '记忆翻牌', '🃏', 'classic', 'SDTP'),
@@ -137,6 +139,8 @@ export const PLATFORM_GAMES: PlatformGame[] = [
   g('draw', '你画我猜', '🎨', 'party', 'DTP'),
   g('likely', '谁最有可能', '👆', 'party', 'TP'),
   g('p-par-quick', '快问快答', '⚡', 'party', 'DTP'),
+  g('liar', '谁是说谎者', '🤥', 'party', 'DTP'),
+  g('millionaire', '百万富翁', '💰', 'quiz', 'SDTP'),
   g('taboo', '禁忌词挑战', '🚫', 'party', 'DTP'),
   g('p-par-story', '故事接龙', '📝', 'party', 'DTP'),
   g('p-par-roleplay', '角色扮演推理', '🎭', 'party', 'TP'),

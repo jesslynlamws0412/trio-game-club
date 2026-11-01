@@ -22,6 +22,8 @@ export interface GameInfo {
   modes: ModeId[];
   /** 是否适合本地轮流（两人共用一台设备）：每次只有一个人需要操作，或秘密选择可以逐个提交 */
   local: boolean;
+  /** 这款游戏最多支持的人数（多人房间人数超过时不能开始）。不写 = 不限 */
+  maxPlayers?: number;
   /** 是否从题库抽题（房主可以在大厅里设置难度、选择自定义题库） */
   bank: boolean;
 }
@@ -43,13 +45,17 @@ const MODES_BY_GAME: Record<string, ModeId[]> = {
   tictactoe: ['solo', 'duo'],
   gomoku: ['solo', 'duo'],
   taboo: ['duo', 'trio', 'party'],
+  snakes: ['duo', 'trio', 'party'],
+  ludo: ['duo', 'trio', 'party'],
+  millionaire: ['solo', 'duo', 'trio', 'party'],
+  liar: ['duo', 'trio', 'party'],
   reaction: ['solo', 'duo', 'trio', 'party'],
 };
 
 const QUIZ_IDS = new Set(QUIZ_GAMES.map((g) => g.id));
 
 /** 支持本地轮流的游戏。客户端的交接逻辑（client/src/pages/LocalRoom.tsx）要对每款游戏说明现在轮到谁操作。 */
-export const LOCAL_GAMES = new Set(['number', 'memory', 'dice', 'idiom', 'rps', 'tacit', 'truth', 'tictactoe', 'gomoku']);
+export const LOCAL_GAMES = new Set(['number', 'memory', 'dice', 'idiom', 'rps', 'tacit', 'truth', 'tictactoe', 'gomoku', 'snakes', 'ludo', 'millionaire', 'liar']);
 
 /** 题库类游戏（除了最早的答题竞赛）按 bank/games.ts 的配置统一生成 */
 const QUIZ_ENTRIES: Omit<GameInfo, 'modes' | 'bank' | 'local'>[] = QUIZ_GAMES.filter((g) => g.id !== 'quiz').map((g) => ({
@@ -333,10 +339,63 @@ const BASE_CATALOG: Omit<GameInfo, 'modes' | 'bank' | 'local'>[] = [
       '每人轮流当描述者（双人时各两次）。结束后按总分排名：第一 +3、第二 +2、第三 +1。',
     ],
   },
+  {
+    id: 'snakes',
+    name: '蛇梯棋',
+    icon: '🐍',
+    tagline: '掷骰前进，遇梯上、遇蛇下',
+    ready: true,
+    rules: [
+      '100 格棋盘，轮流掷骰子前进。停在梯子底部就爬到梯子顶端，停在蛇头就滑到蛇尾。',
+      '必须刚好走到 100 才算到达终点，点数超出就原地不动。掷到 6 可以再掷一次，连续三个 6 这一轮作废。',
+      '先到 100 的人获胜（+3）；其余玩家按所在格数排名。轮到你 60 秒不掷，系统会替你掷。',
+    ],
+  },
+  {
+    id: 'ludo',
+    name: '飞行棋',
+    icon: '✈️',
+    tagline: '掷 6 起飞，绕圈击落对手',
+    ready: true,
+    rules: [
+      '2~4 人，每人 4 架飞机，开始都在机库。掷到 6 才能让一架飞机起飞；掷到 6 可以再掷一次，连续三个 6 这一轮作废。',
+      '飞机沿 52 格公共跑道绕一圈，再进入自己的终点通道，必须刚好走到终点。',
+      '落在对手飞机所在的格子，会把对手击落回机库；起飞点和星形格（图中带星标记）是安全格，不会被击落。',
+      '为了缩短时间，先让 2 架飞机到达终点的人获胜（+3）。有多架飞机可走时由你选择走哪一架；只有一种走法时自动走。',
+    ],
+  },
+  {
+    id: 'millionaire',
+    name: '百万富翁',
+    icon: '💰',
+    tagline: '15 道题，一路答到 RM 1,000,000',
+    ready: true,
+    rules: [
+      '像电视节目一样，玩家轮流当“参赛者”，从第 1 题答到第 15 题，奖金从 RM 500 一路涨到 RM 1,000,000。前 5 题简单、中间 5 题普通、最后 5 题困难。',
+      '答对第 5 题和第 10 题是保底关：之后答错，也能带走 RM 5,000 / RM 160,000；没过保底关答错则一分没有。',
+      '三个求助各用一次：50:50（去掉两个错误选项）、问观众（观众的票不一定准）、换题。随时可以选择“放弃”，带走当前奖金。每题限时 60 秒，超时按放弃结算。',
+      '所有人都当过参赛者后，按奖金排名：第一 +3、第二 +2、第三 +1。其他人只能当观众（人多时需要耐心等待）。',
+    ],
+  },
+  {
+    id: 'liar',
+    name: '谁是说谎者',
+    icon: '🤥',
+    tagline: '编一个像真的谎话，骗过所有人',
+    ready: true,
+    rules: [
+      '共 6 回合。每回合一道冷知识，答案被挖空了：每个人偷偷编一个“谎话”答案（不能直接写出真答案）。',
+      '真答案和所有谎话混在一起，大家选出自己认为是真的那个，不能选自己编的。',
+      '选中真答案 +2 分；你编的谎话每骗到一个人 +1 分。看看谁最会撒谎，谁又最会识破谎话。',
+    ],
+  },
 ];
+
+const MAX_PLAYERS: Record<string, number> = { ludo: 4 };
 
 export const GAME_CATALOG: GameInfo[] = [...BASE_CATALOG, ...QUIZ_ENTRIES].map((g) => ({
   ...g,
+  maxPlayers: MAX_PLAYERS[g.id],
   bank: QUIZ_IDS.has(g.id),
   local: LOCAL_GAMES.has(g.id),
   modes: QUIZ_IDS.has(g.id) ? (['solo', 'duo', 'trio', 'party'] as ModeId[]) : (MODES_BY_GAME[g.id] ?? ['trio']),

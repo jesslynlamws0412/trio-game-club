@@ -17,6 +17,10 @@ import { TruthGame } from './truth.js';
 import { ReactionGame } from './reaction.js';
 import { BoardGame } from './board.js';
 import { TabooGame } from './taboo.js';
+import { SnakesGame } from './snakes.js';
+import { LudoGame } from './ludo.js';
+import { MillionaireGame } from './millionaire.js';
+import { LiarGame } from './liar.js';
 import { QUIZ_GAMES } from '../bank/games.js';
 
 const factories: Record<string, (ctx: GameCtx) => GameEngine> = {
@@ -40,6 +44,10 @@ const factories: Record<string, (ctx: GameCtx) => GameEngine> = {
   tictactoe: (c) => new BoardGame(c, 'tictactoe'),
   gomoku: (c) => new BoardGame(c, 'gomoku'),
   taboo: (c) => new TabooGame(c),
+  snakes: (c) => new SnakesGame(c),
+  ludo: (c) => new LudoGame(c),
+  millionaire: (c) => new MillionaireGame(c),
+  liar: (c) => new LiarGame(c),
 };
 
 // 所有题库类游戏共用一个引擎，只是题库筛选条件不同

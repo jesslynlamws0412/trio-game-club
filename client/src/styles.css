@@ -413,3 +413,23 @@ img, canvas, svg { max-width: 100%; }
 .check-row { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
 .slider { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; font-size: 14px; }
 .slider input[type=range] { width: 100%; }
+
+/* ===== 蛇梯棋 / 飞行棋 / 百万富翁 ===== */
+.sl-board { display: grid; grid-template-columns: repeat(10, 1fr); gap: 1px; background: var(--brown); padding: 2px; border-radius: 4px; max-width: 420px; margin: 8px auto; }
+.sl-cell { position: relative; aspect-ratio: 1; background: var(--cream); font-size: 9px; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+.sl-cell.ladder { background: #e3f0d8; }
+.sl-cell.snake { background: #f6dcd6; }
+.sl-cell.goal { background: var(--gold-light); }
+.sl-n { color: var(--brown-light); line-height: 1.1; }
+.sl-tag { font-size: 8px; line-height: 1; white-space: nowrap; }
+.sl-pieces { position: absolute; bottom: 0; left: 0; right: 0; display: flex; flex-wrap: wrap; justify-content: center; font-size: 11px; line-height: 1; }
+.sl-pieces i { font-style: normal; }
+.ludo-ring { width: 100%; max-width: 340px; display: block; margin: 8px auto; }
+.ludo-player { border-left: 6px solid var(--brown); padding: 4px 8px; margin: 6px 0; background: #fffaf0; }
+.ludo-tokens { display: flex; flex-direction: column; gap: 2px; font-size: 13px; margin-top: 2px; }
+.ludo-token { border-left: 3px solid; padding-left: 6px; display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.mil-ladder { display: flex; flex-wrap: wrap; gap: 3px; margin: 6px 0; font-size: 11px; }
+.mil-step { padding: 1px 5px; border: 1px solid var(--brown-light); border-radius: 3px; background: #fffaf0; }
+.mil-step.done { background: var(--cream-dark); color: var(--brown-light); }
+.mil-step.now { background: var(--gold); font-weight: 700; }
+.mil-step.safe { border-color: var(--wine); }

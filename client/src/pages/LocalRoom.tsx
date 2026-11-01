@@ -17,7 +17,16 @@ function nextActor(game: string | null, view: any, ids: string[]): string | null
     case 'idiom':
     case 'tictactoe':
     case 'gomoku':
+    case 'snakes':
+    case 'ludo':
       return view.turnId ?? null;
+    case 'millionaire':
+      return view.phase === 'ask' ? view.contestantId ?? null : null;
+    case 'liar':
+      // 写谎话 / 投票都是秘密的：谁还没提交，就轮到谁
+      if (view.phase === 'write') return ids.find((id) => !view.written.includes(id)) ?? null;
+      if (view.phase === 'vote') return ids.find((id) => !view.voted.includes(id)) ?? null;
+      return null;
     case 'rps':
     case 'tacit':
       // 秘密选择：谁还没选，就轮到谁；两人都选完后进入揭晓，不需要再交接

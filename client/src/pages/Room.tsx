@@ -20,6 +20,10 @@ import Truth from '../games/Truth';
 import Reaction from '../games/Reaction';
 import Board from '../games/Board';
 import Taboo from '../games/Taboo';
+import Snakes from '../games/Snakes';
+import Ludo from '../games/Ludo';
+import Millionaire from '../games/Millionaire';
+import Liar from '../games/Liar';
 import { useAct, useCountdown, type GameProps } from '../games/shared';
 import { useGameSounds } from '../useGameSounds';
 
@@ -45,6 +49,10 @@ const GAME_COMPONENTS: Record<string, (p: GameProps) => JSX.Element> = {
   tictactoe: Board,
   gomoku: Board,
   taboo: Taboo,
+  snakes: Snakes,
+  ludo: Ludo,
+  millionaire: Millionaire,
+  liar: Liar,
 };
 const useActFn = useAct;
 
