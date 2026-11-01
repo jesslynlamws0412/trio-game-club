@@ -21,6 +21,7 @@ import Reaction from '../games/Reaction';
 import Board from '../games/Board';
 import Taboo from '../games/Taboo';
 import { useAct, useCountdown, type GameProps } from '../games/shared';
+import { useGameSounds } from '../useGameSounds';
 
 const GAME_COMPONENTS: Record<string, (p: GameProps) => JSX.Element> = {
   undercover: Undercover,
@@ -57,6 +58,7 @@ export default function Room({ room, onLeave }: Props) {
   const [rulesFor, setRulesFor] = useState<GameInfo | null>(null);
   const [editing, setEditing] = useState(false);
   const countdown = useCountdown(room.countdownMs ?? 0, room.phase);
+  useGameSounds(room);
 
   const me = room.players.find((p) => p.id === room.you)!;
   const isHost = room.hostId === room.you;

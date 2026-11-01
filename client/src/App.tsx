@@ -4,11 +4,24 @@ import type { RoomView } from './types';
 import Platform from './pages/Platform';
 import Room from './pages/Room';
 import LocalRoom from './pages/LocalRoom';
+import SoundSettings from './components/SoundSettings';
+import { sfx, unlockAudio } from './audio';
 
 export default function App() {
   const [room, setRoom] = useState<RoomView | null>(null);
   const [connected, setConnected] = useState(socket.connected);
   const [resuming, setResuming] = useState(!!loadSession());
+
+  // 全局：点任何可用的按钮都有点击声；第一次点击时解锁音频并开始背景音乐
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      unlockAudio();
+      const b = (e.target as HTMLElement | null)?.closest('button');
+      if (b && !b.disabled && !b.classList.contains('sound-btn')) sfx.click();
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, []);
 
   useEffect(() => {
     const onState = (v: RoomView) => setRoom(v);
@@ -58,6 +71,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <SoundSettings />
       {!connected && <div className="banner">与服务器断开连接，正在重连……</div>}
       {resuming ? (
         <div className="center-msg">正在回到你的房间……</div>
