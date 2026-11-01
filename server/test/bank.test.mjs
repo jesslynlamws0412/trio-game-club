@@ -78,6 +78,27 @@ const ok = (msg) => console.log(`  ✓ ${++n}. ${msg}`);
   const film = draw({ banks: ['film_music'], tag: 'film', count: 20 });
   assert.ok(film.length > 0 && film.every((q) => q.tag === 'film'));
   ok('抽题：按题库 / 难度 / 标签筛选、不重复、排除已出过的、仅选择题');
+
+  // 选项顺序：题库里正确答案大多写在第一个，出题时必须打乱，且答案同步
+  const pool = draw({ count: 500, choiceOnly: true });
+  const oneOf = pool.filter((q) => q.type === 'single' || q.type === 'reasoning');
+  const where = [0, 0, 0, 0];
+  for (const q of oneOf) {
+    const orig = BUILTIN.find((b) => b.id === q.id);
+    assert.equal(q.options[q.answer], orig.options[orig.answer], `${q.id} 打乱后答案要对得上`);
+    assert.deepEqual([...q.options].sort(), [...orig.options].sort(), `${q.id} 选项不能增减`);
+    if (q.options.length === 4) where[q.answer]++;
+  }
+  const fourTotal = where.reduce((s, x) => s + x, 0);
+  assert.ok(where.every((c) => c > fourTotal * 0.12), `正确答案的位置应该大致平均：${where.join('/')}`);
+  const tf = pool.filter((q) => q.type === 'truefalse');
+  assert.ok(tf.every((q) => q.options[0] === '对' && q.options[1] === '错'), '判断题保持“对 / 错”的顺序');
+  const multis = draw({ banks: ['cn_history', 'cn_lit', 'science'], count: 200 }).filter((q) => q.type === 'multi');
+  for (const q of multis) {
+    const orig = BUILTIN.find((b) => b.id === q.id);
+    assert.deepEqual(q.answer.map((i) => q.options[i]).sort(), orig.answer.map((i) => orig.options[i]).sort(), `${q.id} 多选答案要对得上`);
+  }
+  ok(`出题时打乱选项：答案位置分布 ${where.join('/')}，答案仍然对得上，判断题顺序不变，多选也对得上`);
 }
 
 // ───────────────────────── B. 联机：题库游戏 ─────────────────────────
@@ -119,9 +140,17 @@ async function playQuiz(list, policy) {
     for (let i = 0; i < list.length; i++) {
       const right = policy.right(i, k);
       let a;
-      if (isChoice(q)) a = { choice: right ? q.answer : (q.answer + 1) % q.options.length };
-      else if (q.type === 'multi') a = { choices: right ? q.answer : [q.answer.includes(0) ? q.options.length - 1 : 0].filter((x) => !q.answer.includes(x) || q.answer.length > 1) };
-      else a = { text: right ? q.answer[0] : '乱答一通' };
+      // 出题时选项顺序会被打乱：按玩家屏幕上看到的选项（v.options）找出正确答案的位置
+      const shown = v.options ?? q.options;
+      const pos = (i) => shown.indexOf(q.options[i]);
+      if (isChoice(q)) {
+        const good = pos(q.answer);
+        assert.ok(good >= 0, '屏幕上的选项里应该有正确答案');
+        a = { choice: right ? good : (good + 1) % shown.length };
+      } else if (q.type === 'multi') {
+        const good = q.answer.map(pos);
+        a = { choices: right ? good : [good.includes(0) ? shown.length - 1 : 0].filter((x) => !good.includes(x) || good.length > 1) };
+      } else a = { text: right ? q.answer[0] : '乱答一通' };
       const res = await act(list[i], { type: 'answer', index: k, ...a });
       assert.ok(res.ok, JSON.stringify(res) + ' ' + q.q + ' ' + JSON.stringify(a));
     }

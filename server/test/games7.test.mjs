@@ -181,7 +181,12 @@ const turnSock = (list) => list.find((s) => s.state.you === list[0].state.game.t
   ok('飞行棋规则：落在对手飞机上击落；安全格不被击落；终点必须刚好；起飞需要 6；终点通道不击落');
 }
 // ───────────── 百万富翁 ─────────────
-const answerOf = (text) => BUILTIN.find((q) => q.q === text);
+// 出题时选项顺序是打乱的：传入屏幕上看到的选项，返回的 answer 就是它们里面正确答案的下标
+const answerOf = (text, shown) => {
+  const q = BUILTIN.find((x) => x.q === text);
+  if (!q || !shown) return q;
+  return { ...q, options: shown, answer: shown.indexOf(q.options[q.answer]) };
+};
 {
   const [me] = await setup('solo', 1, 'millionaire');
   await begin([me]);
@@ -197,7 +202,7 @@ const answerOf = (text) => BUILTIN.find((q) => q.q === text);
   assert.ok((await act(me, { type: 'lifeline', kind: 'fifty' })).ok);
   await wait(60);
   v = me.state.game;
-  const real = answerOf(v.question).answer;
+  const real = answerOf(v.question, v.options).answer;
   assert.equal(v.removed.length, 2);
   assert.ok(!v.removed.includes(real), '50:50 不能去掉正确答案');
   assert.equal((await act(me, { type: 'lifeline', kind: 'fifty' })).ok, false);
@@ -215,7 +220,7 @@ const answerOf = (text) => BUILTIN.find((q) => q.q === text);
   // 一路答对到 15 题
   for (let k = 0; k < 15; k++) {
     await until(() => me.state.game.phase === 'ask' && me.state.game.level === k, 3000, `第 ${k + 1} 题`);
-    const q = answerOf(me.state.game.question);
+    const q = answerOf(me.state.game.question, me.state.game.options);
     assert.ok(q, '题目应该来自题库');
     assert.ok((await act(me, { type: 'answer', choice: q.answer })).ok);
     await wait(40);
@@ -231,11 +236,11 @@ const answerOf = (text) => BUILTIN.find((q) => q.q === text);
   await begin([me]);
   for (let k = 0; k < 7; k++) {
     await until(() => me.state.game.phase === 'ask' && me.state.game.level === k, 3000);
-    assert.ok((await act(me, { type: 'answer', choice: answerOf(me.state.game.question).answer })).ok);
+    assert.ok((await act(me, { type: 'answer', choice: answerOf(me.state.game.question, me.state.game.options).answer })).ok);
     await wait(40);
   }
   await until(() => me.state.game.phase === 'ask' && me.state.game.level === 7, 3000);
-  const q = answerOf(me.state.game.question);
+  const q = answerOf(me.state.game.question, me.state.game.options);
   assert.ok((await act(me, { type: 'answer', choice: (q.answer + 1) % q.options.length })).ok);
   await wait(60);
   assert.equal(me.state.game.result.reason, 'wrong');
@@ -250,7 +255,7 @@ const answerOf = (text) => BUILTIN.find((q) => q.q === text);
   await begin([m2]);
   for (let k = 0; k < 3; k++) {
     await until(() => m2.state.game.phase === 'ask' && m2.state.game.level === k, 3000);
-    await act(m2, { type: 'answer', choice: answerOf(m2.state.game.question).answer });
+    await act(m2, { type: 'answer', choice: answerOf(m2.state.game.question, m2.state.game.options).answer });
     await wait(40);
   }
   await until(() => m2.state.game.phase === 'ask' && m2.state.game.level === 3, 3000);

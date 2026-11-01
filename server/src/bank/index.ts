@@ -34,7 +34,7 @@ export const BANKS: BankInfo[] = [
 const BANK_NAME = new Map(BANKS.map((b) => [b.id, b.name]));
 export const bankName = (id: string) => BANK_NAME.get(id) ?? '自定义题库';
 
-// ───── 旧版答题竞赛题库（62 题）：按内容归入新的题库，难度统一为“简单” ─────
+// ───── 旧版答题竞赛题库（60 题）：按内容归入新的题库，难度统一为“简单” ─────
 function legacyBank(q: (typeof QUIZ_BANK)[number]): string {
   const s = q.q;
   if (q.c === '文学') return /哈姆雷特|小王子|老人与海/.test(s) ? 'world_lit' : 'cn_lit';
@@ -148,7 +148,20 @@ export function draw(o: DrawOpts): Question[] {
     }
     if (picked.length >= o.count) break;
   }
-  return shuffle(picked);
+  return shuffle(picked).map(shuffleOptions);
+}
+
+/**
+ * 题库里正确答案大多写在第一个选项，出题时必须打乱选项顺序（并同步改正答案下标），
+ * 否则每次选第一个就能赢。判断题（对 / 错）保持原顺序。返回副本，不改动题库本身。
+ */
+export function shuffleOptions(q: Question): Question {
+  if (!q.options || q.type === 'truefalse') return q;
+  const order = shuffle(q.options.map((_, i) => i)); // order[新位置] = 原下标
+  const options = order.map((i) => q.options![i]);
+  const to = (old: number) => order.indexOf(old);
+  const answer = Array.isArray(q.answer) && typeof q.answer[0] === 'number' ? (q.answer as number[]).map(to) : typeof q.answer === 'number' ? to(q.answer) : q.answer;
+  return { ...q, options, answer };
 }
 
 export function bankStats() {
