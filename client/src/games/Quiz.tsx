@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AwardList, nameOf, useCountdown, type GameProps } from './shared';
+import { t } from '../i18n';
 
 export default function Quiz({ room, view, act }: GameProps) {
   const left = useCountdown(view.endsInMs ?? 0, view);
@@ -15,17 +16,17 @@ export default function Quiz({ room, view, act }: GameProps) {
   if (view.phase === 'over') {
     return (
       <div>
-        <h2>📚 题库问答 · 最终排名</h2>
+        <h2>📚 {t('题库问答')} · {t('最终排名')}</h2>
         <ol className="rank">
           {view.ranking.map((r: any) => (
             <li key={r.id}>
               <span className="medal">{['🥇', '🥈', '🥉'][r.rank - 1]}</span>
               <span>{nameOf(room, r.id)}</span>
-              <span className="score">{r.points} 分</span>
+              <span className="score">{t('{n} 分', { n: r.points })}</span>
             </li>
           ))}
         </ol>
-        <p className="hint">名次奖励（第一 +3 / 第二 +2 / 第三 +1）：</p>
+        <p className="hint">{t('名次奖励（第一 +3 / 第二 +2 / 第三 +1）：')}</p>
         <AwardList room={room} />
       </div>
     );
@@ -41,7 +42,7 @@ export default function Quiz({ room, view, act }: GameProps) {
   return (
     <div>
       <h2>
-        📚 {view.category} <small>第 {view.index + 1} / {view.total} 题 · {view.difficultyName} · {view.typeName}</small>
+        📚 {view.category} <small>{t('第 {a} / {b} 题', { a: view.index + 1, b: view.total })} · {view.difficultyName} · {view.typeName}</small>
       </h2>
       {!revealing && <div className="timer">{left}</div>}
       {view.image && <div className="q-image">{view.image}</div>}
@@ -82,7 +83,7 @@ export default function Quiz({ room, view, act }: GameProps) {
 
       {multi && !mine && !revealing && (
         <button className="btn primary small" disabled={picked.length === 0} onClick={() => act({ type: 'answer', index: view.index, choices: picked })}>
-          提交答案（已选 {picked.length} 项，必须全对）
+          {t('提交答案（已选 {n} 项，必须全对）', { n: picked.length })}
         </button>
       )}
 
@@ -90,33 +91,33 @@ export default function Quiz({ room, view, act }: GameProps) {
         <div className="chat-input">
           <input
             maxLength={40}
-            placeholder="输入你的答案"
+            placeholder={t('输入你的答案')}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submitText()}
           />
-          <button className="btn small primary" onClick={submitText}>提交</button>
+          <button className="btn small primary" onClick={submitText}>{t('提交')}</button>
         </div>
       )}
 
       {!revealing && (
         <p className="hint">
-          {mine ? '已提交，等待其他人……' : '越快答对，加分越多'}（已作答 {view.answered.length} / {room.players.length}）
+          {mine ? t('已提交，等待其他人……') : t('越快答对，加分越多')}{t('（已作答 {a} / {b}）', { a: view.answered.length, b: room.players.length })}
         </p>
       )}
 
       {revealing && (
         <>
           <p className="answer-box">
-            {view.correct[room.you] ? '✅ 答对了！' : '❌ 答错了'}　正确答案：<b>{view.answerText}</b>
+            {view.correct[room.you] ? t('✅ 答对了！') : t('❌ 答错了')}　{t('正确答案：')}<b>{view.answerText}</b>
             <br />
-            <span className="hint">解释：{view.explain}</span>
+            <span className="hint">{t('解释：')}{view.explain}</span>
           </p>
           <ul className="awards">
             {room.players.map((p) => (
               <li key={p.id}>
                 <span>{p.avatar} {p.nickname}{view.shown[p.id] !== null && !choiceType ? `（${view.shown[p.id]}）` : ''}</span>
-                <b>{view.gains[p.id] > 0 ? `+${view.gains[p.id]}` : '答错/未答'}　合计 {view.points[p.id]}</b>
+                <b>{view.gains[p.id] > 0 ? `+${view.gains[p.id]}` : t('答错/未答')}　{t('合计')} {view.points[p.id]}</b>
               </li>
             ))}
           </ul>

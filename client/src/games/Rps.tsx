@@ -50,7 +50,7 @@ export default function Rps({ room, view, act }: GameProps) {
       </div>
       {!revealing && (
         <p className="hint">
-          {picked ? t('已出拳，等待其他人……') : t('选择你的出拳')}（{t('已出拳 {a} / {b}', { a: view.answered.length, b: room.players.length })}）
+          {picked ? t('已出拳，等待其他人……') : t('选择你的出拳')}{t('（已出拳 {a} / {b}）', { a: view.answered.length, b: room.players.length })}
         </p>
       )}
       {revealing && (

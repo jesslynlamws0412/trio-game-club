@@ -38,6 +38,18 @@ const io = new Server(server, { cors: { origin: true }, maxHttpBufferSize: 100_0
 
 app.get('/healthz', (_req, res) => res.send('ok'));
 const AUDIT = process.env.I18N_AUDIT === '1';
+/** 审计用：没有英文版的中文题目的所有文字（它们只会出给中文玩家，不算漏翻） */
+let zhOnlyText: Set<string> | null = null;
+function zhOnlyQuestionText() {
+  if (!zhOnlyText) {
+    zhOnlyText = new Set();
+    for (const q of BUILTIN) {
+      if (q.en) continue;
+      for (const s of [q.q, q.explain, q.image ?? '', ...(q.options ?? []), ...(Array.isArray(q.answer) ? q.answer.filter((x) => typeof x === 'string') : [])]) zhOnlyText.add(s as string);
+    }
+  }
+  return zhOnlyText;
+}
 if (AUDIT) app.get('/api/i18n-audit', (_req, res) => res.json(Object.fromEntries(Object.entries(audit).map(([k, v]) => [k, [...v]]))));
 app.get('/api/platform', (req, res) => res.json(translateDeep(PLATFORM, normLang(req.query.lang))));
 
@@ -54,10 +66,11 @@ function broadcast(room: Room) {
     if (!p.socketId) continue;
     const view = viewFor(room, p);
     if (AUDIT) {
-      // 游戏列表里有所有游戏的规则（还没翻译的不算漏翻），所以单独处理：只检查已有英文版的游戏
-      const { catalog, ...rest } = view;
+      // 游戏列表里有所有游戏的规则（还没翻译的不算漏翻），所以单独处理：只检查已有英文版的游戏。
+      // 游戏画面按“英文玩家会看到的样子”检查（题库题目会换成英文版）。
+      const { catalog, ...rest } = viewFor(room, { ...p, lang: 'en' });
       const names = room.players.map((x) => x.nickname);
-      recordAudit(room.currentGame ?? 'lobby', rest, names);
+      recordAudit(room.currentGame ?? 'lobby', rest, names, zhOnlyQuestionText());
       for (const g of catalog) if (g.en) recordAudit(g.id, g, names);
     }
     io.to(p.socketId).emit('room:state', translateDeep(view, p.lang));

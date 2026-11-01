@@ -74,7 +74,7 @@ export function tr(text: string): string {
 }
 
 /** 玩家自己输入的文字（昵称）不翻译 */
-const SKIP_KEYS = new Set(['nickname']);
+const SKIP_KEYS = new Set(['nickname', 'shown', 'myText']); // 玩家自己输入的文字（昵称、填空题的答案）不翻译
 
 /** 把视图里所有的中文文字翻译成英文，返回新对象；中文玩家的视图原样返回。 */
 export function translateDeep<T>(value: T, lang: Lang): T {
@@ -111,9 +111,10 @@ export function untranslated(value: unknown, found = new Set<string>()): Set<str
  * 记下还含中文的句子（按游戏分类），测试结束时可以通过 /api/i18n-audit 看到有没有漏翻的。
  */
 export const audit: Record<string, Set<string>> = {};
-export function recordAudit(game: string, value: unknown, names: string[] = []) {
+export function recordAudit(game: string, value: unknown, names: string[] = [], ignore?: Set<string>) {
   const left = untranslated(translateDeep(value, 'en'));
   for (let s of left) {
+    if (ignore?.has(s)) continue; // 没有英文版的中文题目（只会出给中文玩家）
     for (const n of names) if (n) s = s.split(n).join('');
     if (CJK.test(s)) (audit[game] ??= new Set()).add(s);
   }

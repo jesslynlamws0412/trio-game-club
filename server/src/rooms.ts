@@ -281,6 +281,7 @@ function beginGame(room: Room, gameId: string) {
   room.engine = createEngine(gameId, {
     players: room.players.map((p) => ({ id: p.id, nickname: p.nickname })),
     rotation: room.gamesPlayed,
+    english: room.players.some((p) => p.lang === 'en'),
     notify: () => room.notify?.(),
     settings: room.settings,
     used: room.usedQuestions,
@@ -430,7 +431,7 @@ export function viewFor(room: Room, viewer: Player) {
     history: room.history.slice(-8).reverse(),
     selectedGame: resolveGame(room),
     settings: room.settings,
-    game: room.engine ? room.engine.viewFor(viewer.id) : null,
+    game: room.engine ? room.engine.viewFor(viewer.id, viewer.lang) : null,
     gameOver: room.engine?.isOver() ?? false,
     awards: room.engine?.isOver() ? room.engine.scores() : null,
     players: room.players.map((p) => ({

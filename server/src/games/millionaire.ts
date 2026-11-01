@@ -1,6 +1,6 @@
 import type { GameCtx, GameEngine, Result } from './types.js';
 import { rankPoints, shuffle } from './util.js';
-import { bankName, draw, DIFFICULTY_NAMES, type Question } from '../bank/index.js';
+import { bankName, draw, localize, DIFFICULTY_NAMES, type Question } from '../bank/index.js';
 
 /** 15 级奖金阶梯（令吉 RM） */
 export const LADDER = [500, 1000, 2000, 3000, 5000, 10000, 20000, 40000, 80000, 160000, 250000, 350000, 500000, 750000, 1000000];
@@ -50,7 +50,7 @@ export class MillionaireGame implements GameEngine {
     const difficulty = this.level < 5 ? 1 : this.level < 10 ? 2 : 3;
     const exclude = new Set([...this.used, ...(this.ctx.used ?? [])]);
     // 只出 4 个选项的单选题（判断题和只有两个选项的题没法 50:50）
-    const cands = draw({ difficulty, choiceOnly: true, count: 30, exclude });
+    const cands = draw({ difficulty, choiceOnly: true, count: 30, exclude, english: this.ctx.english });
     const q = cands.find((c) => (c.options?.length ?? 0) >= 4) ?? cands[0];
     this.used.add(q.id);
     this.ctx.used?.add(q.id);
@@ -86,7 +86,7 @@ export class MillionaireGame implements GameEngine {
     if (this.timer) clearTimeout(this.timer);
     const won = reason === 'wrong' ? this.guaranteed() : reason === 'win' ? LADDER[14] : this.current();
     this.money[this.who] = won;
-    this.last = { correct: reason === 'win', picked, answer: this.q.answer as number, explain: this.q.explain, won, ended: true, reason };
+    this.last = { correct: reason === 'win', picked, answer: this.q.answer as number, explain: '', won, ended: true, reason };
     this.phase = 'result';
     this.timer = setTimeout(() => this.advanceContestant(), RESULT_MS);
   }
@@ -124,7 +124,7 @@ export class MillionaireGame implements GameEngine {
         }
         // 答对：短暂显示结果，再进入下一题
         if (this.timer) clearTimeout(this.timer);
-        this.last = { correct: true, picked: a.choice, answer: this.q.answer as number, explain: this.q.explain, won: LADDER[this.level - 1], ended: false, reason: 'right' };
+        this.last = { correct: true, picked: a.choice, answer: this.q.answer as number, explain: '', won: LADDER[this.level - 1], ended: false, reason: 'right' };
         this.phase = 'result';
         this.timer = setTimeout(() => {
           this.last = null;
@@ -177,7 +177,8 @@ export class MillionaireGame implements GameEngine {
     if (this.phase === 'ask') this.finish('quit');
   }
 
-  viewFor(pid: string) {
+  viewFor(pid: string, lang?: 'zh' | 'en') {
+    const lq = localize(this.q, lang); // 英文玩家看到英文题干、选项和解释
     const base = { game: 'millionaire', phase: this.phase, ladder: LADDER, safe: SAFE_LEVELS, money: this.money, order: this.order, contestantIndex: this.contestant };
     if (this.phase === 'over') return { ...base, ranking: rankPoints(this.money, this.ids) };
     return {
@@ -186,16 +187,16 @@ export class MillionaireGame implements GameEngine {
       level: this.level,
       category: bankName(this.q.bank),
       difficultyName: DIFFICULTY_NAMES[this.level < 5 ? 1 : this.level < 10 ? 2 : 3],
-      question: this.q.q,
+      question: lq.q,
       image: this.q.image ?? null,
-      options: this.q.options,
+      options: lq.options,
       removed: this.removed,
       audience: this.audience,
       lifelines: this.life[this.who],
       endsInMs: this.phase === 'ask' ? Math.max(0, this.startedAt + QUESTION_MS - Date.now()) : 0,
       guaranteed: this.guaranteed(),
       // 只有出结果之后才公布正确答案和解释
-      result: this.phase === 'result' ? this.last : null,
+      result: this.phase === 'result' && this.last ? { ...this.last, explain: lq.explain } : null,
     };
   }
 

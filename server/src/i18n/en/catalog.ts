@@ -261,6 +261,20 @@ export const CATALOG: Record<string, string> = {
   '多人：本轮最快 +3、第二 +2、第三 +1。单人：不到 300 毫秒 3 分，不到 500 毫秒 2 分，其余 1 分。':
     'Multiplayer: fastest of the round +3, second +2, third +1. Solo: under 300 ms = 3 points, under 500 ms = 2 points, otherwise 1.',
   '结束后按总分排名：第一 +3、第二 +2、第三 +1。': 'Ranked by total score at the end: 1st +3, 2nd +2, 3rd +1.',
+
+  // ───── 题库问答 / 百万富翁 的规则 ─────
+  '共 10 题，从对应题库随机抽取，同一局不会重复，同一房间连续玩也尽量不重复。': '10 questions drawn at random from the matching question bank — no repeats within a game, and as few repeats as possible when you keep playing in the same room. If anyone in the room uses English, only questions that have an English version are used.',
+  '题型包括单选、多选（必须全对）、判断、填空、简答、图片猜题和文字推理，限时作答（选择题 15 秒，多选 20 秒，打字题 25 秒）。': 'Question types include single choice, multiple choice (all answers must be right), true/false, fill in the blank, short answer, picture quizzes and logic questions. Time limits: 15 seconds for choice questions, 20 for multiple choice, 25 for typed answers.',
+  '答对得 10 分，并按速度加 0~5 分。揭晓时显示正确答案和解释。': 'A correct answer scores 10 points plus 0–5 for speed. The correct answer and an explanation are shown after each question.',
+  '房主可以在大厅里设置难度。': 'The host can set the difficulty in the lobby.',
+  '结束后按总分排名：第一 +3、第二 +2、第三 +1 计入总积分。': 'Ranked by total score at the end: 1st +3, 2nd +2, 3rd +1 added to the overall score.',
+  '共 10 题，含单选题与判断题，涵盖文学、历史、地理、文化、常识。': '10 questions, single choice and true/false, covering literature, history, geography, culture and general knowledge.',
+  '每题 15 秒，所有人同时作答。答对得 10 分，并按答题速度加 0~5 分。': '15 seconds per question, everyone answers at the same time. A correct answer scores 10 points plus 0–5 for speed.',
+  '全部结束后显示排名：第一 +3、第二 +2、第三 +1 计入总积分（单人模式只与自己比，得 +3）。': 'Rankings are shown at the end: 1st +3, 2nd +2, 3rd +1 added to the overall score (in solo mode you only compete against yourself and get +3).',
+  '像电视节目一样，玩家轮流当“参赛者”，从第 1 题答到第 15 题，奖金从 RM 500 一路涨到 RM 1,000,000。前 5 题简单、中间 5 题普通、最后 5 题困难。': 'Like the TV show, players take turns as the "contestant", answering up to 15 questions while the prize climbs from RM 500 to RM 1,000,000. The first 5 questions are easy, the middle 5 normal and the last 5 hard.',
+  '答对第 5 题和第 10 题是保底关：之后答错，也能带走 RM 5,000 / RM 160,000；没过保底关答错则一分没有。': 'Questions 5 and 10 are safe levels: after them, a wrong answer still lets you take home RM 5,000 / RM 160,000; a wrong answer before the first safe level pays nothing.',
+  '三个求助各用一次：50:50（去掉两个错误选项）、问观众（观众的票不一定准）、换题。随时可以选择“放弃”，带走当前奖金。每题限时 60 秒，超时按放弃结算。': 'Three lifelines, one use each: 50:50 (removes two wrong options), Ask the Audience (the audience vote is not always right) and Swap Question. You can "Walk away" at any time with your current prize. Each question has a 60-second limit; on timeout you walk away.',
+  '所有人都当过参赛者后，按奖金排名：第一 +3、第二 +2、第三 +1。其他人只能当观众（人多时需要耐心等待）。': 'After everyone has been the contestant, players are ranked by prize: 1st +3, 2nd +2, 3rd +1. The others are the audience (with many players you will need some patience).',
 };
 
 /** 已经完整翻译成英文的游戏（房间里有人选英文时，只有这些游戏能开始） */

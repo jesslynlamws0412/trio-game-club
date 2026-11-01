@@ -1,6 +1,6 @@
 import type { GameCtx, GameEngine, Result } from './types.js';
 import { rankPoints } from './util.js';
-import { answerText, checkSubmission, draw, isChoice, judge, publicQuestion, DIFFICULTY_NAMES, TYPE_NAMES, type Question } from '../bank/index.js';
+import { answerText, checkSubmission, draw, isChoice, judge, localize, publicQuestion, DIFFICULTY_NAMES, TYPE_NAMES, type Question } from '../bank/index.js';
 import type { QuizGameCfg } from '../bank/games.js';
 
 const TOTAL = 10;
@@ -41,6 +41,7 @@ export class QuizGame implements GameEngine {
       choiceOnly: cfg.choiceOnly,
       count: TOTAL,
       exclude: ctx.used,
+      english: ctx.english,
     });
     for (const q of this.questions) ctx.used?.add(q.id);
     for (const id of this.ids) this.points[id] = 0;
@@ -118,19 +119,18 @@ export class QuizGame implements GameEngine {
   }
 
   /** 揭晓时显示每个人的答案 */
-  private shown(id: string): string | null {
+  private shown(id: string, q: Question): string | null {
     const a = this.answers.get(id);
     if (!a) return null;
-    const q = this.q;
     if (isChoice(q)) return q.options![a.sub.choice!];
     if (q.type === 'multi') return a.sub.choices!.map((i) => q.options![i]).join('、');
     return a.sub.text ?? null;
   }
 
-  viewFor(pid: string) {
+  viewFor(pid: string, lang?: 'zh' | 'en') {
     const base = { game: 'quiz', phase: this.phase, total: this.questions.length, index: this.idx, points: this.points };
     if (this.phase === 'over') return { ...base, ranking: this.ranking() };
-    const q = this.q;
+    const q = localize(this.q, lang); // 英文玩家看到英文题干、选项和解释
     const mine = this.answers.get(pid);
     const pub = publicQuestion(q);
     const view: any = {
@@ -154,7 +154,7 @@ export class QuizGame implements GameEngine {
       view.answerText = answerText(q);
       view.explain = q.explain;
       view.choices = Object.fromEntries(this.ids.map((id) => [id, this.answers.get(id)?.sub.choice ?? null]));
-      view.shown = Object.fromEntries(this.ids.map((id) => [id, this.shown(id)]));
+      view.shown = Object.fromEntries(this.ids.map((id) => [id, this.shown(id, q)]));
       view.correct = Object.fromEntries(this.ids.map((id) => [id, this.correct.get(id) ?? false]));
       view.answerSet = q.type === 'multi' ? q.answer : null;
       view.gains = this.lastGains;

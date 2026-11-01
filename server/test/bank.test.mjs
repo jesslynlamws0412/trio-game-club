@@ -99,6 +99,26 @@ const ok = (msg) => console.log(`  ✓ ${++n}. ${msg}`);
     assert.deepEqual(q.answer.map((i) => q.options[i]).sort(), orig.answer.map((i) => orig.options[i]).sort(), `${q.id} 多选答案要对得上`);
   }
   ok(`出题时打乱选项：答案位置分布 ${where.join('/')}，答案仍然对得上，判断题顺序不变，多选也对得上`);
+
+  // 英文版：每道英文题的选项和中文版一一对应、没有中文残留；打乱选项后英文答案仍然对得上；填空题接受英文答案
+  const withEn = BUILTIN.filter((q) => q.en);
+  assert.ok(withEn.length >= 250, '至少 250 道题有英文版：' + withEn.length);
+  for (const q of withEn) {
+    assert.ok(q.en.q && q.en.explain, q.id);
+    assert.ok(!/[\u4e00-\u9fff]/.test(JSON.stringify(q.en)), q.id + ' 英文版里有中文');
+    if (q.options && q.type !== 'truefalse') assert.equal(q.en.options?.length, q.options.length, q.id + ' 英文选项数量要和中文一致');
+    if (!q.options) assert.ok(q.en.answer?.length, q.id + ' 填空题需要英文答案');
+  }
+  const english = draw({ count: 500, english: true });
+  assert.ok(english.length > 100 && english.every((q) => q.en), '英文模式只抽有英文版的题');
+  for (const q of english.filter((x) => x.en.options && typeof x.answer === 'number')) {
+    const orig = BUILTIN.find((b) => b.id === q.id);
+    assert.equal(q.en.options[q.answer], orig.en.options[orig.answer], q.id + ' 打乱后英文答案要对得上');
+    assert.equal(q.options[q.answer], orig.options[orig.answer], q.id + ' 打乱后中文答案也要对得上');
+  }
+  const kl = BUILTIN.find((q) => q.q === '马来西亚的首都是哪座城市？');
+  assert.ok(judge(kl, { text: 'Kuala Lumpur' }) && judge(kl, { text: ' kuala  lumpur ' }) && judge(kl, { text: '吉隆坡' }) && !judge(kl, { text: 'Penang' }));
+  ok(`英文版：${withEn.length} 道题有英文版，选项和中文一一对应、没有中文残留；英文模式只抽有英文版的题；打乱后答案仍对；填空题中英文答案都接受`);
 }
 
 // ───────────────────────── B. 联机：题库游戏 ─────────────────────────

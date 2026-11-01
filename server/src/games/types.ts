@@ -20,6 +20,8 @@ export interface GameCtx {
   used?: Set<string>;
   /** 已玩局数，用于轮换卧底 / 主持人 */
   rotation: number;
+  /** 房间里有玩家使用英文：题库类游戏只抽有英文版的题 */
+  english?: boolean;
   /** 计时器触发状态变化后，通知房间向所有玩家重新推送视图 */
   notify: () => void;
 }
@@ -29,7 +31,7 @@ export interface GameEngine {
   /** 玩家操作：服务器在这里做全部验证 */
   handleAction(playerId: string, action: any): Result<{ delta?: unknown }>;
   /** 只包含该玩家有权看到的信息 */
-  viewFor(playerId: string): unknown;
+  viewFor(playerId: string, lang?: 'zh' | 'en'): unknown;
   isOver(): boolean;
   /** 本局获得的积分（结束后才有意义） */
   scores(): Record<string, number>;

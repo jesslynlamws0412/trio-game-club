@@ -11,6 +11,7 @@ import { EXTRA3 } from './data/extra3.js';
 import { EXTRA4 } from './data/extra4.js';
 import { QUIZ_BANK } from '../data/quizBank.js';
 import { shuffle } from '../games/util.js';
+import { EN_QUESTIONS } from './en/index.js';
 
 export * from './types.js';
 
@@ -62,6 +63,11 @@ export const BUILTIN: Question[] = (() => {
     return { ...d, id: `${d.bank}-${counter[d.bank]}` } as Question;
   });
 })();
+// 把英文版按中文题干对上（题库里的题顺序变了也不会错位）
+for (const q of BUILTIN) {
+  const en = EN_QUESTIONS[q.q];
+  if (en) q.en = en;
+}
 const BY_ID = new Map(BUILTIN.map((q) => [q.id, q]));
 export const getBuiltin = (id: string) => BY_ID.get(id);
 
@@ -101,7 +107,7 @@ export function judge(q: Question, s: Submission): boolean {
     return want.length === got.length && want.every((v, i) => v === got[i]);
   }
   const t = norm(String(s.text));
-  return (q.answer as string[]).some((a) => norm(a) === t);
+  return [...(q.answer as string[]), ...(q.en?.answer ?? [])].some((a) => norm(a) === t);
 }
 
 /** 揭晓时给玩家看的“正确答案”文字 */
@@ -127,11 +133,14 @@ export interface DrawOpts {
   count: number;
   /** 本房间已经出过的题，尽量不重复 */
   exclude?: Set<string>;
+  /** 房间里有英文玩家：只抽有英文版的题 */
+  english?: boolean;
 }
 
 export function draw(o: DrawOpts): Question[] {
   let pool = BUILTIN.filter((q) => (!o.banks || o.banks.includes(q.bank)) && (!o.tag || q.tag === o.tag));
   if (o.choiceOnly) pool = pool.filter(isChoice);
+  if (o.english) pool = pool.filter(hasEn);
   const fit = (list: Question[]) => (o.difficulty ? list.filter((q) => q.difficulty === o.difficulty) : list);
   const fresh = (list: Question[]) => (o.exclude ? list.filter((q) => !o.exclude!.has(q.id)) : list);
   // 依次放宽：指定难度且没出过 → 没出过 → 指定难度 → 全部
@@ -161,7 +170,8 @@ export function shuffleOptions(q: Question): Question {
   const options = order.map((i) => q.options![i]);
   const to = (old: number) => order.indexOf(old);
   const answer = Array.isArray(q.answer) && typeof q.answer[0] === 'number' ? (q.answer as number[]).map(to) : typeof q.answer === 'number' ? to(q.answer) : q.answer;
-  return { ...q, options, answer };
+  const en = q.en?.options ? { ...q.en, options: order.map((i) => q.en!.options![i]) } : q.en;
+  return { ...q, options, answer, en };
 }
 
 export function bankStats() {
@@ -169,4 +179,17 @@ export function bankStats() {
     const list = BUILTIN.filter((q) => q.bank === b.id);
     return { ...b, total: list.length, byDifficulty: { 1: list.filter((q) => q.difficulty === 1).length, 2: list.filter((q) => q.difficulty === 2).length, 3: list.filter((q) => q.difficulty === 3).length } };
   });
+}
+
+// ───── 英文版 ─────
+/** 这道题有没有英文版 */
+export const hasEn = (q: Question) => !!q.en;
+
+/**
+ * 按玩家的语言取这道题：英文玩家看到英文题干、选项和解释；有英文版才会换，没有就原样返回。
+ * 选项顺序和数量与中文版一致，所以答案下标不变；填空题的答案换成英文答案（判题时中英文答案都接受）。
+ */
+export function localize(q: Question, lang: 'zh' | 'en' | undefined): Question {
+  if (lang !== 'en' || !q.en) return q;
+  return { ...q, q: q.en.q, options: q.en.options ?? q.options, explain: q.en.explain, answer: q.en.answer ?? q.answer };
 }

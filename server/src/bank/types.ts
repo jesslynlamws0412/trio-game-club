@@ -19,6 +19,18 @@ export interface Question {
   tag?: string;
   /** 自定义题库的题目才有：所属玩家 */
   owner?: string;
+  /**
+   * 英文版（可选）：选项和中文版一一对应（顺序、数量都一样），所以答案下标通用。
+   * 填空 / 简答题的 answer 是可接受的英文答案。有英文版的题才会出给英文玩家。
+   */
+  en?: EnglishQuestion;
+}
+
+export interface EnglishQuestion {
+  q: string;
+  options?: string[];
+  explain: string;
+  answer?: string[];
 }
 
 export interface BankInfo {

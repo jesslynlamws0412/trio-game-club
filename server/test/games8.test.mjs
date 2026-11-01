@@ -179,6 +179,9 @@ const turnSock = (list) => list.find((s) => s.state.you === list[0].state.game.t
 
   let throws = 0;
   while (!list[0].state.gameOver && throws < 80) {
+    // 等到下一球开始瞄准（结果展示期间视图里没有力度条）
+    await until(() => list.every((x) => x.state.gameOver || (x.state.game.phase === 'aim' && x.state.game.meter)), 4000, '下一球开始瞄准');
+    if (list[0].state.gameOver) break;
     const s = turnSock(list);
     const before = list[0].state.game.cards[s.state.you].rolls.length;
     // 在指针经过正中间时投球（这样大概率击倒很多球瓶）

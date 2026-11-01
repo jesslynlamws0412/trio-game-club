@@ -1,5 +1,6 @@
 ﻿import { QUIZ_GAMES } from '../bank/games.js';
 import { EN_GAMES } from '../i18n/en/catalog.js';
+import { BUILTIN, hasEn, isChoice } from '../bank/index.js';
 
 export type ModeId = 'solo' | 'duo' | 'trio' | 'party';
 
@@ -77,7 +78,7 @@ const QUIZ_ENTRIES: Omit<GameInfo, 'modes' | 'bank' | 'local' | 'en'>[] = QUIZ_G
     '共 10 题，从对应题库随机抽取，同一局不会重复，同一房间连续玩也尽量不重复。',
     '题型包括单选、多选（必须全对）、判断、填空、简答、图片猜题和文字推理，限时作答（选择题 15 秒，多选 20 秒，打字题 25 秒）。',
     '答对得 10 分，并按速度加 0~5 分。揭晓时显示正确答案和解释。',
-    '房主可以在大厅里设置难度，也可以选择自定义题库。',
+    '房主可以在大厅里设置难度。',
     '结束后按总分排名：第一 +3、第二 +2、第三 +1 计入总积分。',
   ],
 }));
@@ -477,11 +478,30 @@ const BASE_CATALOG: Omit<GameInfo, 'modes' | 'bank' | 'local' | 'en'>[] = [
 
 const MAX_PLAYERS: Record<string, number> = { ludo: 4, uno: 6, scrabble: 4 };
 
+/**
+ * 题库类游戏：英文题够多（至少 15 道，保证连着玩也不重复太多）就算有英文版，
+ * 房间里有英文玩家时只会抽有英文版的题。百万富翁要 4 个选项的英文单选题至少 30 道。
+ */
+function enQuestions(cfg: { banks: string[]; tag?: string; choiceOnly?: boolean }) {
+  return BUILTIN.filter((q) => cfg.banks.includes(q.bank) && (!cfg.tag || q.tag === cfg.tag) && hasEn(q) && (!cfg.choiceOnly || isChoice(q)));
+}
+let enBankGames: Set<string> | null = null;
+/** 这款题库类游戏有没有足够的英文题（第一次用到时才计算） */
+function isEnBankGame(id: string): boolean {
+  if (!enBankGames) {
+    enBankGames = new Set([
+      ...QUIZ_GAMES.filter((g) => enQuestions(g).length >= 15).map((g) => g.id),
+      ...(BUILTIN.filter((q) => hasEn(q) && isChoice(q) && (q.options?.length ?? 0) >= 4).length >= 30 ? ['millionaire'] : []),
+    ]);
+  }
+  return enBankGames.has(id);
+}
+
 export const GAME_CATALOG: GameInfo[] = [...BASE_CATALOG, ...QUIZ_ENTRIES].map((g) => ({
   ...g,
   maxPlayers: MAX_PLAYERS[g.id],
   bank: QUIZ_IDS.has(g.id),
-  en: EN_GAMES.includes(g.id),
+  en: EN_GAMES.includes(g.id) || isEnBankGame(g.id),
   local: LOCAL_GAMES.has(g.id),
   modes: QUIZ_IDS.has(g.id) ? (['solo', 'duo', 'trio', 'party'] as ModeId[]) : (MODES_BY_GAME[g.id] ?? ['trio']),
 }));

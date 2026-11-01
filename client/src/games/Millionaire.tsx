@@ -1,4 +1,5 @@
 import { AwardList, nameOf, useCountdown, type GameProps } from './shared';
+import { t } from '../i18n';
 
 const rm = (n: number) => 'RM ' + n.toLocaleString('en-US');
 
@@ -8,7 +9,7 @@ export default function Millionaire({ room, view, act }: GameProps) {
   if (view.phase === 'over') {
     return (
       <div>
-        <h2>💰 百万富翁 · 最终奖金</h2>
+        <h2>💰 {t('百万富翁')} · {t('最终奖金')}</h2>
         <ol className="rank">
           {view.ranking.map((r: any) => (
             <li key={r.id}>
@@ -18,7 +19,7 @@ export default function Millionaire({ room, view, act }: GameProps) {
             </li>
           ))}
         </ol>
-        <p className="hint">名次奖励（第一 +3 / 第二 +2 / 第三 +1）：</p>
+        <p className="hint">{t('名次奖励（第一 +3 / 第二 +2 / 第三 +1）：')}</p>
         <AwardList room={room} />
       </div>
     );
@@ -31,9 +32,9 @@ export default function Millionaire({ room, view, act }: GameProps) {
 
   return (
     <div>
-      <h2>💰 百万富翁 <small>第 {view.contestantIndex + 1} / {view.order.length} 位参赛者</small></h2>
+      <h2>💰 {t('百万富翁')} <small>{t('第 {a} / {b} 位参赛者', { a: view.contestantIndex + 1, b: view.order.length })}</small></h2>
       <p className="question">
-        参赛者：<b>{nameOf(room, view.contestantId)}</b>　已赢 <b>{rm(view.level === 0 ? 0 : view.ladder[view.level - 1])}</b>　保底 {rm(view.guaranteed)}
+        {t('参赛者：')}<b>{nameOf(room, view.contestantId)}</b>　{t('已赢')} <b>{rm(view.level === 0 ? 0 : view.ladder[view.level - 1])}</b>　{t('保底')} {rm(view.guaranteed)}
       </p>
       <div className="mil-ladder">
         {view.ladder.map((v: number, i: number) => (
@@ -43,7 +44,7 @@ export default function Millionaire({ room, view, act }: GameProps) {
         ))}
       </div>
       {asking && <div className="timer">{left}</div>}
-      <p className="hint">第 {view.level + 1} 题 · {view.category} · {view.difficultyName}</p>
+      <p className="hint">{t('第 {n} 题', { n: view.level + 1 })} · {view.category} · {view.difficultyName}</p>
       {view.image && <div className="q-image">{view.image}</div>}
       <p className="question">{view.question}</p>
       <div className="options">
@@ -65,20 +66,20 @@ export default function Millionaire({ room, view, act }: GameProps) {
       {asking && me && (
         <div className="actions row">
           <button className="btn small gold" disabled={!L.fifty} onClick={() => act({ type: 'lifeline', kind: 'fifty' })}>50:50</button>
-          <button className="btn small gold" disabled={!L.audience} onClick={() => act({ type: 'lifeline', kind: 'audience' })}>问观众</button>
-          <button className="btn small gold" disabled={!L.swap} onClick={() => act({ type: 'lifeline', kind: 'swap' })}>换题</button>
-          <button className="btn small ghost" onClick={() => confirm('放弃并带走当前奖金？') && act({ type: 'quit' })}>放弃</button>
+          <button className="btn small gold" disabled={!L.audience} onClick={() => act({ type: 'lifeline', kind: 'audience' })}>{t('问观众')}</button>
+          <button className="btn small gold" disabled={!L.swap} onClick={() => act({ type: 'lifeline', kind: 'swap' })}>{t('换题')}</button>
+          <button className="btn small ghost" onClick={() => confirm(t('放弃并带走当前奖金？')) && act({ type: 'quit' })}>{t('放弃并带走奖金')}</button>
         </div>
       )}
-      {asking && !me && <p className="hint">现在由 {nameOf(room, view.contestantId)} 答题，你是观众，可以在旁边出主意。</p>}
+      {asking && !me && <p className="hint">{t('现在由 {name} 答题，你是观众，可以在旁边出主意。', { name: nameOf(room, view.contestantId) })}</p>}
       {result && (
         <p className="answer-box">
           {result.ended
-            ? result.reason === 'win' ? '🎉 通关！百万富翁诞生！' : result.reason === 'wrong' ? '❌ 答错了' : result.reason === 'timeout' ? '⏰ 超时，按放弃结算' : '🏁 放弃了'
-            : '✅ 答对了！'}
-          　{result.ended ? `最终带走 ${rm(result.won)}` : `当前奖金 ${rm(result.won)}`}
+            ? result.reason === 'win' ? t('🎉 通关！百万富翁诞生！') : result.reason === 'wrong' ? t('❌ 答错了') : result.reason === 'timeout' ? t('⏰ 超时，按放弃结算') : t('🏁 放弃了')
+            : t('✅ 答对了！')}
+          　{result.ended ? t('最终带走 {n}', { n: rm(result.won) }) : t('当前奖金 {n}', { n: rm(result.won) })}
           <br />
-          <span className="hint">正确答案：{'ABCD'[result.answer]}。{result.explain}</span>
+          <span className="hint">{t('正确答案：')}{'ABCD'[result.answer]}. {result.explain}</span>
         </p>
       )}
       <ul className="awards">
