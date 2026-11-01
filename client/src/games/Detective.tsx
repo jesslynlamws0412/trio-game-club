@@ -48,7 +48,7 @@ export default function Detective({ room, view, act }: GameProps) {
         <p className="surface">{c.intro}</p>
         <ul className="suspects">
           {c.suspects.map((s: any) => (
-            <li key={s.id}><b>{s.name}</b>：{s.desc}</li>
+            <li key={s.id}><b>{s.name}</b>{t('：')}{s.desc}</li>
           ))}
         </ul>
       </details>
@@ -145,7 +145,7 @@ export default function Detective({ room, view, act }: GameProps) {
               const ans = view.result.answers[p.id];
               return (
                 <li key={p.id}>
-                  <span>{p.avatar} {p.nickname}：{ans ? `${suspectName(ans.suspect)}` : '-'}</span>
+                  <span>{p.avatar} {p.nickname}{t('：')}{ans ? `${suspectName(ans.suspect)}` : '-'}</span>
                   <b>{t('+{n} 分', { n: view.result.points[p.id] ?? 0 })}</b>
                 </li>
               );

@@ -444,7 +444,7 @@ export const EN: Record<string, string> = {
   '谁最有可能': 'Most Likely To',
   '真假判断': 'True or False',
   '默契大考验': 'Mind Meld',
-  '（你自己）': '(yourself)',
+  '（你自己）': ' (yourself)',
   '判断这句话是对还是错': 'Is this statement true or false?',
   '投给你认为最有可能的人（不能投自己）': 'Vote for the person you think is most likely (not yourself)',
   '选一个你觉得大家也会选的': 'Pick the one you think everyone else will pick too',
@@ -611,4 +611,5 @@ export const EN: Record<string, string> = {
   '凶手：': 'Culprit: ',
   '动机：': 'Motive: ',
   '团队答案：': 'Team answer: ',
+  '：': ': ',
 };

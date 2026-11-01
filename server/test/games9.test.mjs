@@ -60,7 +60,7 @@ async function reset() {
   const r = cur.state.game.rack;
   const bad = await act(cur, { type: 'play', tiles: [{ id: r[0].id, r: 0, c: 0 }, { id: r[1].id, r: 0, c: 1 }] });
   assert.equal(bad.ok, false);
-  assert.match(bad.error, /中心/);
+  assert.match(bad.error, /中心|空白牌/); // 手牌里恰好抽到空白牌时，会先提示要指定字母
   assert.equal((await act(cur, { type: 'play', tiles: [{ id: r[0].id, r: 99, c: 0 }] })).ok, false);
   assert.equal((await act(cur, { type: 'play', tiles: 'x' })).ok, false);
   assert.equal((await act(cur, { type: 'play', tiles: [{ id: r[0].id, r: 7, c: 7 }, { id: r[0].id, r: 7, c: 8 }] })).ok, false);

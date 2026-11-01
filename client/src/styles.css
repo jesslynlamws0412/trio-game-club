@@ -171,7 +171,7 @@ input:focus { outline: 2px solid var(--gold); }
 .word-card .surface { font-size: 18px; line-height: 1.7; margin: 6px 0 0; text-align: left; }
 textarea { width: 100%; font: inherit; font-size: 15px; padding: 8px 10px; background: #fffaf0; color: var(--brown); border: 1.5px solid var(--brown-light); border-radius: 4px; }
 .desc-list { list-style: none; padding: 0; margin: 10px 0; line-height: 1.8; }
-.desc-list .rd { font-size: 12px; background: var(--green); color: var(--cream); padding: 1px 6px; border-radius: 3px; }
+.rd { font-size: 12px; background: var(--green); color: var(--cream); padding: 1px 6px; border-radius: 3px; }
 .chat-log { list-style: none; margin: 8px 0; padding: 8px; background: #fffaf0; border: 1px solid var(--cream-dark); border-radius: 4px; max-height: 180px; overflow-y: auto; font-size: 15px; }
 .chat-log li { margin-bottom: 4px; }
 .chat-log li.mine { color: var(--green); }

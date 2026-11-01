@@ -107,8 +107,11 @@ function isPlayerText(k: string, o: Record<string, unknown>) {
   return k === 'text' && ('playerId' in o || o.kind === 'hint' || o.kind === 'guess' || o.kind === 'q');
 }
 
+/** 页面字体（宋体）里的弯引号是全角的，英文里会显得空一大格，所以统一换成直引号 */
+export const straighten = (s: string) => s.replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
+
 function walk(v: unknown): unknown {
-  if (typeof v === 'string') return tr(v);
+  if (typeof v === 'string') return straighten(tr(v));
   if (Array.isArray(v)) return v.map(walk);
   if (v && typeof v === 'object') {
     if (v instanceof Set || v instanceof Map) return v;

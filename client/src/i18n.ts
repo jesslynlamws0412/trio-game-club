@@ -40,5 +40,7 @@ export function useLang(): Lang {
 export function t(zh: string, params?: Record<string, string | number>): string {
   let s = lang === 'en' ? EN[zh] ?? zh : zh;
   if (params) s = s.replace(/\{(\w+)\}/g, (_all, k: string) => String(params[k] ?? ''));
+  // 页面字体里的弯引号是全角的，英文里会空一大格，换成直引号
+  if (lang === 'en') s = s.replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
   return s;
 }
