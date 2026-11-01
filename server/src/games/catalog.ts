@@ -54,13 +54,14 @@ const MODES_BY_GAME: Record<string, ModeId[]> = {
   bowling: ['solo', 'duo', 'trio', 'party'],
   basketball: ['solo', 'duo', 'trio', 'party'],
   sheep: ['solo', 'duo', 'trio', 'party'],
+  scrabble: ['solo', 'duo', 'trio', 'party'],
   reaction: ['solo', 'duo', 'trio', 'party'],
 };
 
 const QUIZ_IDS = new Set(QUIZ_GAMES.map((g) => g.id));
 
 /** 支持本地轮流的游戏。客户端的交接逻辑（client/src/pages/LocalRoom.tsx）要对每款游戏说明现在轮到谁操作。 */
-export const LOCAL_GAMES = new Set(['number', 'memory', 'dice', 'idiom', 'rps', 'tacit', 'truth', 'tictactoe', 'gomoku', 'snakes', 'ludo', 'millionaire', 'liar', 'uno', 'jenga']);
+export const LOCAL_GAMES = new Set(['number', 'memory', 'dice', 'idiom', 'rps', 'tacit', 'truth', 'tictactoe', 'gomoku', 'snakes', 'ludo', 'millionaire', 'liar', 'uno', 'jenga', 'scrabble']);
 
 /** 题库类游戏（除了最早的答题竞赛）按 bank/games.ts 的配置统一生成 */
 const QUIZ_ENTRIES: Omit<GameInfo, 'modes' | 'bank' | 'local'>[] = QUIZ_GAMES.filter((g) => g.id !== 'quiz').map((g) => ({
@@ -456,9 +457,22 @@ const BASE_CATALOG: Omit<GameInfo, 'modes' | 'bank' | 'local'>[] = [
       '多人时大家用同一个牌堆比赛，各玩各的：先通关的人获胜（+3）；都没通关则比谁消除得多。单人通关 +3。这个游戏很难，通关不一定能做到。',
     ],
   },
+  {
+    id: 'scrabble',
+    name: '拼字游戏',
+    icon: '🔤',
+    tagline: 'Scrabble：用字母牌拼英文单词',
+    ready: true,
+    rules: [
+      '1~4 人，15×15 棋盘，100 张字母牌（含 2 张空白牌，可当任何字母），每人 7 张。要会拼英文单词！',
+      '轮到你：把字母牌放在同一行或同一列，拼成英文单词（第一手要经过中心 ★，之后要和棋盘上已有的牌相连）；所有新形成的单词（包括旁边连在一起的）都要在词典里，否则不能提交。',
+      '得分 = 字母分数之和。新放的牌压在彩色格子上有加成：浅蓝 2 倍字母、深蓝 3 倍字母、粉色 2 倍单词、红色 3 倍单词（只对新放的牌有效）。一次用完 7 张牌额外 +50。空白牌 0 分。',
+      '你也可以换牌（牌袋里至少还有 7 张时）或跳过。一人用完牌且牌袋已空，或连续多手没人得分，游戏结束：剩余字母牌的分数会被扣掉。分数最高者获胜：第一 +3、第二 +2、第三 +1。轮到你 60 秒不动，系统会替你跳过。',
+    ],
+  },
 ];
 
-const MAX_PLAYERS: Record<string, number> = { ludo: 4, uno: 6 };
+const MAX_PLAYERS: Record<string, number> = { ludo: 4, uno: 6, scrabble: 4 };
 
 export const GAME_CATALOG: GameInfo[] = [...BASE_CATALOG, ...QUIZ_ENTRIES].map((g) => ({
   ...g,

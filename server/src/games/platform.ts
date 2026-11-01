@@ -65,7 +65,7 @@ const MAX: Record<ModeId, number> = { solo: 1, duo: 2, trio: 3, party: 8 };
 const LIVE = new Set([
   'undercover', 'draw', 'quiz', 'werewolf', 'monopoly', 'cards', 'turtlesoup', 'detective',
   'likely', 'tacit', 'dice', 'number', 'memory',
-  'truefalse', 'rps', 'idiom', 'truth', 'reaction', 'tictactoe', 'gomoku', 'taboo', 'snakes', 'ludo', 'millionaire', 'liar', 'uno', 'jenga', 'bowling', 'basketball', 'sheep',
+  'truefalse', 'rps', 'idiom', 'truth', 'reaction', 'tictactoe', 'gomoku', 'taboo', 'snakes', 'ludo', 'millionaire', 'liar', 'uno', 'jenga', 'bowling', 'basketball', 'sheep', 'scrabble',
   ...QUIZ_GAMES.map((q) => q.id),
 ]);
 
@@ -127,6 +127,7 @@ export const PLATFORM_GAMES: PlatformGame[] = [
   g('bowling', '保龄球', '🎳', 'classic', 'SDTP'),
   g('basketball', '投篮机', '🏀', 'reaction', 'SDTP'),
   g('sheep', '羊了个羊', '🐑', 'reaction', 'SDTP'),
+  g('scrabble', '拼字游戏', '🔤', 'word', 'SDTP'),
   g('snakes', '蛇梯棋', '🐍', 'classic', 'DTP'),
   g('ludo', '飞行棋', '✈️', 'classic', 'DTP'),
   g('tictactoe', '井字棋', '❌', 'classic', 'SD'),

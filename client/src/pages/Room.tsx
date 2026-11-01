@@ -25,6 +25,7 @@ import Ludo from '../games/Ludo';
 import Millionaire from '../games/Millionaire';
 import Liar from '../games/Liar';
 import Uno from '../games/Uno';
+import Scrabble from '../games/Scrabble';
 import Jenga from '../games/Jenga';
 import Bowling from '../games/Bowling';
 import Basketball from '../games/Basketball';
@@ -59,6 +60,7 @@ const GAME_COMPONENTS: Record<string, (p: GameProps) => JSX.Element> = {
   millionaire: Millionaire,
   liar: Liar,
   uno: Uno,
+  scrabble: Scrabble,
   jenga: Jenga,
   bowling: Bowling,
   basketball: Basketball,

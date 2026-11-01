@@ -71,6 +71,7 @@ try {
   run('井字棋、五子棋（含电脑）、禁忌词挑战', 'games6.test.mjs');
   run('蛇梯棋、飞行棋、百万富翁、谁是说谎者', 'games7.test.mjs', [], { tsx: true });
   run('UNO、叠叠高、保龄球、投篮机、羊了个羊', 'games8.test.mjs', [], { tsx: true });
+  run('拼字游戏联机', 'games9.test.mjs');
   run('题库系统', 'bank.test.mjs', [], { tsx: true });
   run('稳定性：乱发数据/断线重连/并发', 'robust.test.mjs');
   run('全平台矩阵：每款游戏 × 每种模式', 'matrix.test.mjs');
@@ -78,6 +79,9 @@ try {
   const u = spawnSync(process.execPath, ['--import', 'tsx', path.join(root, 'server/test/monopoly.unit.ts')], { cwd: root, encoding: 'utf8' });
   const um = (u.stdout + u.stderr).match(/全部 (\d+) 项通过/);
   results.push({ name: '大富翁规则单元测试', pass: u.status === 0, count: um ? Number(um[1]) : null, sec: '-', tail: u.status === 0 ? '' : (u.stdout + u.stderr).slice(-600) });
+  const sc = spawnSync(process.execPath, ['--import', 'tsx', path.join(root, 'server/test/scrabble.unit.ts')], { cwd: root, encoding: 'utf8' });
+  const scm = (sc.stdout + sc.stderr).match(/全部 (\d+) 项通过/);
+  results.push({ name: '拼字游戏规则单元测试', pass: sc.status === 0, count: scm ? Number(scm[1]) : null, sec: '-', tail: sc.status === 0 ? '' : (sc.stdout + sc.stderr).slice(-600) });
 } finally {
   await stopServer();
 }

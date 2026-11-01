@@ -11,7 +11,8 @@
   "dependencies": {
     "express": "^4.21.0",
     "socket.io": "^4.8.0",
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "word-list": "^4.1.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

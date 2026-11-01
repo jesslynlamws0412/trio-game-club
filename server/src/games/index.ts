@@ -22,6 +22,7 @@ import { LudoGame } from './ludo.js';
 import { MillionaireGame } from './millionaire.js';
 import { LiarGame } from './liar.js';
 import { UnoGame } from './uno.js';
+import { ScrabbleGame } from './scrabble.js';
 import { JengaGame } from './jenga.js';
 import { BowlingGame } from './bowling.js';
 import { BasketballGame } from './basketball.js';
@@ -54,6 +55,7 @@ const factories: Record<string, (ctx: GameCtx) => GameEngine> = {
   millionaire: (c) => new MillionaireGame(c),
   liar: (c) => new LiarGame(c),
   uno: (c) => new UnoGame(c),
+  scrabble: (c) => new ScrabbleGame(c),
   jenga: (c) => new JengaGame(c),
   bowling: (c) => new BowlingGame(c),
   basketball: (c) => new BasketballGame(c),

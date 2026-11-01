@@ -21,6 +21,7 @@ function nextActor(game: string | null, view: any, ids: string[]): string | null
     case 'ludo':
     case 'uno':
     case 'jenga':
+    case 'scrabble':
       return view.turnId ?? null;
     case 'millionaire':
       return view.phase === 'ask' ? view.contestantId ?? null : null;
