@@ -21,6 +21,11 @@ import { SnakesGame } from './snakes.js';
 import { LudoGame } from './ludo.js';
 import { MillionaireGame } from './millionaire.js';
 import { LiarGame } from './liar.js';
+import { UnoGame } from './uno.js';
+import { JengaGame } from './jenga.js';
+import { BowlingGame } from './bowling.js';
+import { BasketballGame } from './basketball.js';
+import { SheepGame } from './sheep.js';
 import { QUIZ_GAMES } from '../bank/games.js';
 
 const factories: Record<string, (ctx: GameCtx) => GameEngine> = {
@@ -48,6 +53,11 @@ const factories: Record<string, (ctx: GameCtx) => GameEngine> = {
   ludo: (c) => new LudoGame(c),
   millionaire: (c) => new MillionaireGame(c),
   liar: (c) => new LiarGame(c),
+  uno: (c) => new UnoGame(c),
+  jenga: (c) => new JengaGame(c),
+  bowling: (c) => new BowlingGame(c),
+  basketball: (c) => new BasketballGame(c),
+  sheep: (c) => new SheepGame(c),
 };
 
 // 所有题库类游戏共用一个引擎，只是题库筛选条件不同

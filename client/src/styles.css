@@ -433,3 +433,39 @@ img, canvas, svg { max-width: 100%; }
 .mil-step.done { background: var(--cream-dark); color: var(--brown-light); }
 .mil-step.now { background: var(--gold); font-weight: 700; }
 .mil-step.safe { border-color: var(--wine); }
+
+/* ===== UNO / 叠叠高 / 力度条 / 保龄球 / 羊了个羊 ===== */
+.uno-table { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+.uno-card { min-width: 44px; height: 64px; border: 3px solid #fffaf0; border-radius: 8px; color: #fff; font-size: 20px; font-weight: 700; font-family: var(--font); cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,.4); }
+.uno-card.small { min-width: 48px; height: 40px; font-size: 14px; }
+.uno-card.dim { opacity: .45; }
+.uno-card:disabled { cursor: default; }
+.uno-hand { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+.uno-color { padding: 6px 12px; border-radius: 6px; color: #fff; font-weight: 700; }
+.uno-pick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 8px 0; }
+.jenga-tower { display: flex; flex-direction: column; gap: 3px; align-items: center; margin: 10px 0; }
+.jenga-row { display: flex; gap: 3px; }
+.jenga-block { width: 82px; height: 28px; border: 2px solid #6b4a2b; border-radius: 3px; background: #c9955c; color: #3b2a1e; font-size: 11px; font-family: var(--font); cursor: pointer; padding: 0; }
+.jenga-row.rot .jenga-block { background: #b88349; }
+.jenga-block.gone { background: transparent; border: 2px dashed #bbb; cursor: default; }
+.jenga-block.locked, .jenga-block:disabled { opacity: .75; cursor: default; }
+.meter { position: relative; height: 26px; margin: 10px 0; background: #e6dcc3; border: 2px solid var(--brown); border-radius: 13px; overflow: hidden; }
+.meter-zone { position: absolute; top: 0; bottom: 0; background: rgba(46,139,87,.55); }
+.meter-center { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--green-dark); }
+.meter-pin { position: absolute; top: -2px; bottom: -2px; width: 8px; margin-left: -4px; background: var(--wine); border-radius: 4px; }
+.court { text-align: center; font-size: 56px; }
+.pins { display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 8px 0; }
+.pin-row { display: flex; gap: 10px; }
+.pin { font-size: 26px; }
+.pin.down { opacity: .15; transform: rotate(80deg); }
+.bowl-sheet { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; overflow-x: auto; }
+.bowl-frames { display: flex; gap: 2px; }
+.bowl-frame { display: flex; flex-direction: column; align-items: center; min-width: 30px; border: 1px solid var(--brown-light); font-size: 11px; }
+.bowl-frame i { font-style: normal; height: 14px; }
+.bowl-frame.now { background: var(--gold-light); }
+.bowl-total { padding: 0 6px; font-weight: 700; align-self: center; }
+.sheep-board { position: relative; margin: 8px auto; background: #e8dcbc; border-radius: 8px; }
+.sheep-tile { position: absolute; padding: 0; border: 2px solid var(--brown); border-radius: 6px; background: #fffaf0; box-shadow: 0 2px 0 rgba(0,0,0,.35); cursor: pointer; line-height: 1; }
+.sheep-tile.blocked { background: #b9b09a; cursor: default; filter: brightness(.85); }
+.sheep-tray { display: flex; justify-content: center; gap: 3px; margin: 8px 0; padding: 4px; background: var(--brown-light); border-radius: 6px; }
+.sheep-slot { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #fffaf0; border-radius: 4px; font-size: 24px; }

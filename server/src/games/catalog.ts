@@ -49,13 +49,18 @@ const MODES_BY_GAME: Record<string, ModeId[]> = {
   ludo: ['duo', 'trio', 'party'],
   millionaire: ['solo', 'duo', 'trio', 'party'],
   liar: ['duo', 'trio', 'party'],
+  uno: ['duo', 'trio', 'party'],
+  jenga: ['duo', 'trio', 'party'],
+  bowling: ['solo', 'duo', 'trio', 'party'],
+  basketball: ['solo', 'duo', 'trio', 'party'],
+  sheep: ['solo', 'duo', 'trio', 'party'],
   reaction: ['solo', 'duo', 'trio', 'party'],
 };
 
 const QUIZ_IDS = new Set(QUIZ_GAMES.map((g) => g.id));
 
 /** 支持本地轮流的游戏。客户端的交接逻辑（client/src/pages/LocalRoom.tsx）要对每款游戏说明现在轮到谁操作。 */
-export const LOCAL_GAMES = new Set(['number', 'memory', 'dice', 'idiom', 'rps', 'tacit', 'truth', 'tictactoe', 'gomoku', 'snakes', 'ludo', 'millionaire', 'liar']);
+export const LOCAL_GAMES = new Set(['number', 'memory', 'dice', 'idiom', 'rps', 'tacit', 'truth', 'tictactoe', 'gomoku', 'snakes', 'ludo', 'millionaire', 'liar', 'uno', 'jenga']);
 
 /** 题库类游戏（除了最早的答题竞赛）按 bank/games.ts 的配置统一生成 */
 const QUIZ_ENTRIES: Omit<GameInfo, 'modes' | 'bank' | 'local'>[] = QUIZ_GAMES.filter((g) => g.id !== 'quiz').map((g) => ({
@@ -389,9 +394,70 @@ const BASE_CATALOG: Omit<GameInfo, 'modes' | 'bank' | 'local'>[] = [
       '选中真答案 +2 分；你编的谎话每骗到一个人 +1 分。看看谁最会撒谎，谁又最会识破谎话。',
     ],
   },
+  {
+    id: 'uno',
+    name: 'UNO',
+    icon: '🃏',
+    tagline: '同色、同数字，先出完手牌',
+    ready: true,
+    rules: [
+      '2~6 人，每人 7 张牌。出牌必须和弃牌堆顶的牌同颜色、同数字或同符号；万能牌随时可以出，并选择新的颜色。',
+      '没有牌可出就摸一张，摸到能出的可以马上出，也可以选择不出（跳过）。',
+      '功能牌：🚫 禁止（下家跳过）、🔄 反转（改变方向；两人时相当于禁止）、+2（下家摸 2 张并被跳过）、🌈 万能牌、+4 万能牌（选颜色，下家摸 4 张并被跳过）。+2 和 +4 不能叠加。',
+      '先出完手牌的人获胜（+3）；其余人按剩余牌数从少到多排名。手牌剩 1 张时系统自动喊 UNO。轮到你 60 秒不动，系统会替你出牌或摸牌。',
+    ],
+  },
+  {
+    id: 'jenga',
+    name: '叠叠高',
+    icon: '🧱',
+    tagline: '轮流抽积木，谁抽倒谁输',
+    ready: true,
+    rules: [
+      '18 层积木，每层 3 块。轮流抽出一块（最上面两层不能抽；只剩一块的那一层也不能抽），抽出的积木会放到塔顶。',
+      '每次抽积木都有塔倒的风险，积木上会显示百分比：抽得越多越危险；越靠下越危险；一层只剩 2 块时再抽走一块最危险。',
+      '抽倒塔的人输（0 分），其余人按抽出的块数排名。抽满 40 块塔还没倒，所有人按块数排名。轮到你 60 秒不抽，系统会替你抽风险最小的一块。',
+    ],
+  },
+  {
+    id: 'bowling',
+    name: '保龄球',
+    icon: '🎳',
+    tagline: '看准力度条，打出全中',
+    ready: true,
+    rules: [
+      '每人打 10 格，每格最多两球（第 10 格有奖励球最多三球）。轮流打，每人打完一格换下一位。',
+      '每次投球，力度条来回摆动，点投球的那一刻指针越靠近正中间，击倒的球瓶越多。指针位置由服务器按时间计算，不能作弊；网络延迟会有一点点偏差。',
+      '标准计分：全中（Strike）= 10 + 后两球；补中（Spare）= 10 + 后一球。总分最高者获胜：第一 +3、第二 +2、第三 +1。每球限时 15 秒，超时随便扔一球。',
+    ],
+  },
+  {
+    id: 'basketball',
+    name: '投篮机',
+    icon: '🏀',
+    tagline: '指针到绿区，一击命中',
+    ready: true,
+    rules: [
+      '每人 10 次投篮，轮流投：近距离 3 次、中距离 4 次、三分线 3 次。越远，绿色区域越窄，指针越快。',
+      '指针经过中间的绿色区域时点投篮：进球得分（近 / 中距离 2 分，三分线 3 分）；落在绿区正中算空心球，再 +1 分。',
+      '指针位置由服务器按时间计算，不能作弊。每次限时 15 秒，超时算没投进。结束后按总分排名：第一 +3、第二 +2、第三 +1。',
+    ],
+  },
+  {
+    id: 'sheep',
+    name: '羊了个羊',
+    icon: '🐑',
+    tagline: '三个相同就消除，托盘别放满',
+    ready: true,
+    rules: [
+      '三层叠起来的 72 张牌，8 种图案各 9 张。点没有被压住的牌，它会进入底部的 7 格托盘；托盘里集齐 3 张相同的就自动消除。',
+      '托盘放满 7 张还没消除就失败；把所有牌都消除就通关。每人有一次道具：撤回上一步、洗牌、移出托盘最前面的 3 张。',
+      '多人时大家用同一个牌堆比赛，各玩各的：先通关的人获胜（+3）；都没通关则比谁消除得多。单人通关 +3。这个游戏很难，通关不一定能做到。',
+    ],
+  },
 ];
 
-const MAX_PLAYERS: Record<string, number> = { ludo: 4 };
+const MAX_PLAYERS: Record<string, number> = { ludo: 4, uno: 6 };
 
 export const GAME_CATALOG: GameInfo[] = [...BASE_CATALOG, ...QUIZ_ENTRIES].map((g) => ({
   ...g,

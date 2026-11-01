@@ -24,6 +24,11 @@ import Snakes from '../games/Snakes';
 import Ludo from '../games/Ludo';
 import Millionaire from '../games/Millionaire';
 import Liar from '../games/Liar';
+import Uno from '../games/Uno';
+import Jenga from '../games/Jenga';
+import Bowling from '../games/Bowling';
+import Basketball from '../games/Basketball';
+import Sheep from '../games/Sheep';
 import { useAct, useCountdown, type GameProps } from '../games/shared';
 import { useGameSounds } from '../useGameSounds';
 
@@ -53,6 +58,11 @@ const GAME_COMPONENTS: Record<string, (p: GameProps) => JSX.Element> = {
   ludo: Ludo,
   millionaire: Millionaire,
   liar: Liar,
+  uno: Uno,
+  jenga: Jenga,
+  bowling: Bowling,
+  basketball: Basketball,
+  sheep: Sheep,
 };
 const useActFn = useAct;
 

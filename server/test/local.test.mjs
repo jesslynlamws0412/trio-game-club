@@ -47,11 +47,11 @@ await wait();
 assert.equal(host.state.players.length, 2);
 ok('持有密钥的设备替第二位玩家加入成功');
 
-assert.deepEqual(host.state.catalog.map((x) => x.id).sort(), ['dice', 'gomoku', 'idiom', 'memory', 'number', 'rps', 'tacit', 'tictactoe', 'truth']);
+assert.deepEqual(host.state.catalog.map((x) => x.id).sort(), ['dice', 'gomoku', 'idiom', 'jenga', 'liar', 'ludo', 'memory', 'millionaire', 'number', 'rps', 'snakes', 'tacit', 'tictactoe', 'truth', 'uno']);
 assert.ok(host.state.catalog.every((x) => x.local && x.modes.includes('duo')));
 assert.equal((await emit(host, 'room:vote', { gameId: 'q-cnlit' })).ok, false);
 assert.equal((await emit(host, 'room:vote', { gameId: 'draw' })).ok, false);
-ok('本地房间只列出 9 款适合轮流的游戏，投票选其他游戏被拒绝');
+ok('本地房间只列出 15 款适合轮流的游戏，投票选其他游戏被拒绝');
 
 
 // 打一局剪刀石头布：两个人在同一台设备上轮流秘密出拳
