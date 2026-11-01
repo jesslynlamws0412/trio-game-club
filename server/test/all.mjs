@@ -11,7 +11,7 @@ const PORT = 3199;
 const URL = `http://localhost:${PORT}`;
 const FAST = {
   QUIZ_REVEAL_MS: '150', DRAW_REVEAL_MS: '200', MONOPOLY_MAX_ROUNDS: '3', PICK_REVEAL_MS: '150', DICE_REVEAL_MS: '150',
-  MEMORY_HIDE_MS: '150', RPS_REVEAL_MS: '150', IDIOM_TURN_MS: '1200', REACTION_DELAY_MS: '400', REACTION_REVEAL_MS: '150', START_COUNTDOWN_MS: '0',
+  MEMORY_HIDE_MS: '150', RPS_REVEAL_MS: '150', IDIOM_TURN_MS: '1200', REACTION_DELAY_MS: '400', REACTION_REVEAL_MS: '150', START_COUNTDOWN_MS: '0', TABOO_REVEAL_MS: '150',
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -68,6 +68,7 @@ try {
   run('侦探 / 大富翁', 'games3.test.mjs');
   run('新游戏一：谁最有可能/默契/骰子/猜数字/翻牌', 'games4.test.mjs');
   run('新游戏二：真假/猜拳/成语接龙/真心话/反应', 'games5.test.mjs', [], { tsx: true });
+  run('井字棋、五子棋（含电脑）、禁忌词挑战', 'games6.test.mjs');
   run('题库系统', 'bank.test.mjs', [], { tsx: true });
   run('稳定性：乱发数据/断线重连/并发', 'robust.test.mjs');
   run('全平台矩阵：每款游戏 × 每种模式', 'matrix.test.mjs');

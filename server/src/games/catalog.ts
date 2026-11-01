@@ -40,13 +40,16 @@ const MODES_BY_GAME: Record<string, ModeId[]> = {
   rps: ['solo', 'duo', 'trio', 'party'],
   idiom: ['solo', 'duo', 'trio', 'party'],
   truth: ['duo', 'trio', 'party'],
+  tictactoe: ['solo', 'duo'],
+  gomoku: ['solo', 'duo'],
+  taboo: ['duo', 'trio', 'party'],
   reaction: ['solo', 'duo', 'trio', 'party'],
 };
 
 const QUIZ_IDS = new Set(QUIZ_GAMES.map((g) => g.id));
 
 /** 支持本地轮流的游戏。客户端的交接逻辑（client/src/pages/LocalRoom.tsx）要对每款游戏说明现在轮到谁操作。 */
-export const LOCAL_GAMES = new Set(['number', 'memory', 'dice', 'idiom', 'rps', 'tacit', 'truth']);
+export const LOCAL_GAMES = new Set(['number', 'memory', 'dice', 'idiom', 'rps', 'tacit', 'truth', 'tictactoe', 'gomoku']);
 
 /** 题库类游戏（除了最早的答题竞赛）按 bank/games.ts 的配置统一生成 */
 const QUIZ_ENTRIES: Omit<GameInfo, 'modes' | 'bank' | 'local'>[] = QUIZ_GAMES.filter((g) => g.id !== 'quiz').map((g) => ({
@@ -291,6 +294,43 @@ const BASE_CATALOG: Omit<GameInfo, 'modes' | 'bank' | 'local'>[] = [
       '反应时间由服务器计时，包含网络延迟。在“点！”出现前点击算抢跑，本轮成绩作废并扣 1 分。',
       '多人：本轮最快 +3、第二 +2、第三 +1。单人：不到 300 毫秒 3 分，不到 500 毫秒 2 分，其余 1 分。',
       '结束后按总分排名：第一 +3、第二 +2、第三 +1。',
+    ],
+  },
+  {
+    id: 'tictactoe',
+    name: '井字棋',
+    icon: '❌',
+    tagline: '3×3 棋盘，先连成三个',
+    ready: true,
+    rules: [
+      '两人轮流在 3×3 的格子里落子，横、竖、斜任意一条线上连成三个的人获胜。',
+      '一个人玩时对手是电脑（偶尔会失误，可以被打败）。先手每局轮换。',
+      '获胜 +3，平局各 +1，输 0。',
+    ],
+  },
+  {
+    id: 'gomoku',
+    name: '五子棋',
+    icon: '⚫',
+    tagline: '15×15 棋盘，先连成五个',
+    ready: true,
+    rules: [
+      '两人轮流在 15×15 的棋盘上落子（先手执黑），横、竖、斜任意一条线上连成五个或更多的人获胜。',
+      '一个人玩时对手是电脑，它会进攻也会防守。先手每局轮换。',
+      '获胜 +3，平局各 +1，输 0。轮到你 60 秒不下，系统会替你下一步。',
+    ],
+  },
+  {
+    id: 'taboo',
+    name: '禁忌词挑战',
+    icon: '🚫',
+    tagline: '不能说出答案，也不能说禁忌词',
+    ready: true,
+    rules: [
+      '每回合一人当描述者，只有他能看到词语和 3 个禁忌词；其他人看不到，只能靠他的文字描述来猜。',
+      '描述里不能出现词语本身，也不能出现任何一个禁忌词，违规一次扣 1 分，违规 3 次本回合作废（违规的内容不会公开）。',
+      '其他人在输入框里抢答，第一个猜对的人 +3，描述者 +2。每回合限时 60 秒。描述者可以“换词”，扣 1 分。',
+      '每人轮流当描述者（双人时各两次）。结束后按总分排名：第一 +3、第二 +2、第三 +1。',
     ],
   },
 ];

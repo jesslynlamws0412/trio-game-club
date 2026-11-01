@@ -18,6 +18,8 @@ import Rps from '../games/Rps';
 import Idiom from '../games/Idiom';
 import Truth from '../games/Truth';
 import Reaction from '../games/Reaction';
+import Board from '../games/Board';
+import Taboo from '../games/Taboo';
 import { useAct, useCountdown, type GameProps } from '../games/shared';
 
 const GAME_COMPONENTS: Record<string, (p: GameProps) => JSX.Element> = {
@@ -39,6 +41,9 @@ const GAME_COMPONENTS: Record<string, (p: GameProps) => JSX.Element> = {
   idiom: Idiom,
   truth: Truth,
   reaction: Reaction,
+  tictactoe: Board,
+  gomoku: Board,
+  taboo: Taboo,
 };
 const useActFn = useAct;
 

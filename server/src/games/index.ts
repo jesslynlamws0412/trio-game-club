@@ -15,6 +15,8 @@ import { RpsGame } from './rps.js';
 import { IdiomGame } from './idiom.js';
 import { TruthGame } from './truth.js';
 import { ReactionGame } from './reaction.js';
+import { BoardGame } from './board.js';
+import { TabooGame } from './taboo.js';
 import { QUIZ_GAMES } from '../bank/games.js';
 
 const factories: Record<string, (ctx: GameCtx) => GameEngine> = {
@@ -35,6 +37,9 @@ const factories: Record<string, (ctx: GameCtx) => GameEngine> = {
   idiom: (c) => new IdiomGame(c),
   truth: (c) => new TruthGame(c),
   reaction: (c) => new ReactionGame(c),
+  tictactoe: (c) => new BoardGame(c, 'tictactoe'),
+  gomoku: (c) => new BoardGame(c, 'gomoku'),
+  taboo: (c) => new TabooGame(c),
 };
 
 // 所有题库类游戏共用一个引擎，只是题库筛选条件不同

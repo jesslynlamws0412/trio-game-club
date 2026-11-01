@@ -15,6 +15,8 @@ function nextActor(game: string | null, view: any, ids: string[]): string | null
     case 'memory':
     case 'dice':
     case 'idiom':
+    case 'tictactoe':
+    case 'gomoku':
       return view.turnId ?? null;
     case 'rps':
     case 'tacit':

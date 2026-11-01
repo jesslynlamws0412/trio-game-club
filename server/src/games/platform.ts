@@ -65,7 +65,7 @@ const MAX: Record<ModeId, number> = { solo: 1, duo: 2, trio: 3, party: 8 };
 const LIVE = new Set([
   'undercover', 'draw', 'quiz', 'werewolf', 'monopoly', 'cards', 'turtlesoup', 'detective',
   'likely', 'tacit', 'dice', 'number', 'memory',
-  'truefalse', 'rps', 'idiom', 'truth', 'reaction',
+  'truefalse', 'rps', 'idiom', 'truth', 'reaction', 'tictactoe', 'gomoku', 'taboo',
   ...QUIZ_GAMES.map((q) => q.id),
 ]);
 
@@ -121,8 +121,8 @@ export const PLATFORM_GAMES: PlatformGame[] = [
   g('p-puz-murderer', '谁是凶手', '🔪', 'puzzle', 'TP'),
   g('werewolf', '三人狼人杀', '🐺', 'puzzle', 'T'),
   // D 经典桌游
-  g('p-cls-gomoku', '五子棋', '⚫', 'classic', 'SD'),
-  g('p-cls-ttt', '井字棋', '❌', 'classic', 'SD'),
+  g('gomoku', '五子棋', '⚫', 'classic', 'SD'),
+  g('tictactoe', '井字棋', '❌', 'classic', 'SD'),
   g('p-cls-chess', '国际象棋', '♞', 'classic', 'SD'),
   g('memory', '记忆翻牌', '🃏', 'classic', 'SDTP'),
   g('dice', '吹牛骰子', '🎲', 'classic', 'DTP'),
@@ -137,7 +137,7 @@ export const PLATFORM_GAMES: PlatformGame[] = [
   g('draw', '你画我猜', '🎨', 'party', 'DTP'),
   g('likely', '谁最有可能', '👆', 'party', 'TP'),
   g('p-par-quick', '快问快答', '⚡', 'party', 'DTP'),
-  g('p-par-taboo', '禁忌词挑战', '🚫', 'party', 'DTP'),
+  g('taboo', '禁忌词挑战', '🚫', 'party', 'DTP'),
   g('p-par-story', '故事接龙', '📝', 'party', 'DTP'),
   g('p-par-roleplay', '角色扮演推理', '🎭', 'party', 'TP'),
   g('p-par-choice', '选择困难挑战', '🤔', 'party', 'DTP'),
