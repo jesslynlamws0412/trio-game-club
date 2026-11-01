@@ -219,7 +219,7 @@ export class ScrabbleGame implements GameEngine {
 
     const d = dictionary();
     const bad = [...words.values()].filter((w) => !d.has(w.word.toLowerCase()));
-    if (bad.length) return { ok: false, error: `${bad.map((w) => w.word).join('、')} 不在词典里` };
+    if (bad.length) return { ok: false, error: `${bad.map((w) => w.word).join(', ')} 不在词典里` };
 
     const list2 = [...words.values()];
     const bingo = placed.length === RACK;
@@ -244,7 +244,8 @@ export class ScrabbleGame implements GameEngine {
         this.score[pid] += move.total;
         this.scoreless = 0;
         this.last = { by: pid, words: move.words, total: move.total, bingo: move.bingo, cells: placed.map((p) => [p.r, p.c]) };
-        this.say(`${name} 拼出 ${move.words.map((w) => `${w.word}(${w.points})`).join('、')}${move.bingo ? ' ＋ 全部用完奖励 50' : ''}，得 ${move.total} 分。`);
+        const listed = move.words.map((w) => `${w.word}(${w.points})`).join(', ');
+        this.say(move.bingo ? `${name} 拼出 ${listed} ＋ 全部用完奖励 50，得 ${move.total} 分。` : `${name} 拼出 ${listed}，得 ${move.total} 分。`);
         if (this.racks[pid].length === 0 && this.bag.length === 0) {
           this.wentOut = pid;
           return this.finish();

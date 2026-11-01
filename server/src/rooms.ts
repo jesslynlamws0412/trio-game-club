@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { GAME_CATALOG, LOCAL_GAMES, MODE_LIMITS, findGame, type ModeId } from './games/catalog.js';
 import { createEngine } from './games/index.js';
 import type { GameEngine, Result, RoomSettings } from './games/types.js';
+import type { Lang } from './i18n.js';
 
 export type { Result };
 
@@ -42,6 +43,8 @@ export interface Player {
   socketId: string | null;
   score: number;
   vote: string | null; // 投票选择的游戏 id
+  /** 玩家选择的界面语言：服务器发给他的文字会翻译成这种语言 */
+  lang: Lang;
   graceTimer: NodeJS.Timeout | null;
 }
 
@@ -104,6 +107,7 @@ function newPlayer(nickname: string, avatar: string, deviceId: unknown): Player 
     socketId: null,
     score: 0,
     vote: null,
+    lang: 'zh',
     graceTimer: null,
   };
 }
@@ -250,6 +254,9 @@ export function startGame(room: Room, player: Player, notify: () => void): Resul
   if (room.players.some((p) => !p.ready)) return { ok: false, error: '还有玩家没有准备' };
   const gameId = resolveGame(room);
   if (!gameId) return { ok: false, error: '请先选择一个游戏' };
+  if (!findGame(gameId)?.en && room.players.some((p) => p.lang === 'en')) {
+    return { ok: false, error: '这个游戏目前只有中文内容，房间里有玩家选择了英文，所以不能开始。请换一个游戏（带 English 标记的游戏支持英文）。' };
+  }
   const cap = findGame(gameId)?.maxPlayers;
   if (cap && room.players.length > cap) return { ok: false, error: `这个游戏最多 ${cap} 人，现在房间里有 ${room.players.length} 人` };
   room.notify = notify;
@@ -434,6 +441,7 @@ export function viewFor(room: Room, viewer: Player) {
       connected: p.connected,
       score: p.score,
       vote: p.vote,
+      lang: p.lang,
     })),
     local: room.local,
     catalog: GAME_CATALOG.filter((g) => g.modes.includes(room.mode) && (!room.local || g.local)),

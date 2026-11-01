@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Home from './Home';
 import BankCenter from './BankCenter';
+import { getLang, t } from '../i18n';
 
 type ModeId = 'solo' | 'duo' | 'trio' | 'party';
 interface ModeInfo { id: ModeId; name: string; en: string; icon: string; players: string; desc: string; open: boolean }
@@ -18,7 +19,7 @@ type View =
   | { page: 'bank' };
 
 function playersText(g: PGame) {
-  return g.minPlayers === g.maxPlayers ? `${g.minPlayers} 人` : `${g.minPlayers}~${g.maxPlayers} 人`;
+  return g.minPlayers === g.maxPlayers ? t('{n} 人', { n: g.minPlayers }) : t('{a}~{b} 人', { a: g.minPlayers, b: g.maxPlayers });
 }
 
 export default function Platform() {
@@ -27,7 +28,7 @@ export default function Platform() {
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    fetch('/api/platform')
+    fetch('/api/platform?lang=' + getLang())
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then(setData)
       .catch(() => setFailed(true));
@@ -37,7 +38,7 @@ export default function Platform() {
   if (view.page === 'room') return <Home mode={view.mode} onBack={() => setView({ page: 'hub' })} />;
 
   if (!data) {
-    return <div className="center-msg">{failed ? '游戏大厅加载失败，请刷新页面重试' : '正在布置大厅……'}</div>;
+    return <div className="center-msg">{failed ? t('游戏大厅加载失败，请刷新页面重试') : t('正在布置大厅……')}</div>;
   }
 
   if (view.page === 'games') {
@@ -57,8 +58,8 @@ export default function Platform() {
     <main className="home hub">
       <header className="masthead">
         <div className="ornament">❖ ❖ ❖</div>
-        <h1>复古桌游俱乐部</h1>
-        <div className="subtitle">RETRO BOARD GAME HUB · 单人 · 双人 · 三人 · 多人</div>
+        <h1>{t('复古桌游俱乐部')}</h1>
+        <div className="subtitle">RETRO BOARD GAME HUB · {t('单人')} · {t('双人')} · {t('三人')} · {t('多人')}</div>
       </header>
 
       <section className="mode-grid">
@@ -70,15 +71,15 @@ export default function Platform() {
           >
             <span className="mode-icon">{m.icon}</span>
             <span className="mode-en">{m.en}</span>
-            <span className="mode-name">{m.name}模式 · {m.players}</span>
+            <span className="mode-name">{t('{mode}模式 · {players}', { mode: m.name, players: m.players })}</span>
             <span className="mode-desc">{m.desc}</span>
-            <span className="tag live">{data.games.filter((g) => g.liveModes.includes(m.id)).length} 款可玩</span>
+            <span className="tag live">{t('{n} 款可玩', { n: data.games.filter((g) => g.liveModes.includes(m.id)).length })}</span>
           </button>
         ))}
       </section>
 
       <section className="paper card">
-        <h2>现在就能玩</h2>
+        <h2>{t('现在就能玩')}</h2>
         <div className="game-grid">
           {live.map((g) => (
             <div key={g.id} className="game-tile">
@@ -88,12 +89,12 @@ export default function Platform() {
           ))}
         </div>
         <div className="actions">
-          <button className="btn" onClick={() => setView({ page: 'games', mode: 'all' })}>浏览游戏大厅</button>
-          <button className="btn gold" onClick={() => setView({ page: 'bank' })}>📚 题库中心</button>
+          <button className="btn" onClick={() => setView({ page: 'games', mode: 'all' })}>{t('浏览游戏大厅')}</button>
+          {getLang() === 'zh' && <button className="btn gold" onClick={() => setView({ page: 'bank' })}>📚 {t('题库中心')}</button>}
         </div>
       </section>
 
-<p className="footnote">共规划 {data.games.length} 款游戏，其中 {live.length} 款已可游玩，其余标注“开发中”</p>
+      <p className="footnote">{t('共规划 {total} 款游戏，其中 {live} 款已可游玩，其余标注“开发中”', { total: data.games.length, live: live.length })}</p>
     </main>
   );
 }
@@ -108,12 +109,12 @@ function GameLobby({ data, mode, onMode, onBack, onEnter }: {
   return (
     <main className="home hub">
       <header className="masthead small">
-        <h1>游戏大厅</h1>
-        <div className="subtitle">{modeInfo ? `${modeInfo.en} · ${modeInfo.name}模式` : '全部模式'}</div>
+        <h1>{t('游戏大厅')}</h1>
+        <div className="subtitle">{modeInfo ? `${modeInfo.en} · ${t('{mode}模式', { mode: modeInfo.name })}` : t('全部模式')}</div>
       </header>
 
       <div className="tabs">
-        <button className={'tab' + (mode === 'all' ? ' on' : '')} onClick={() => onMode('all')}>全部</button>
+        <button className={'tab' + (mode === 'all' ? ' on' : '')} onClick={() => onMode('all')}>{t('全部')}</button>
         {data.modes.map((m) => (
           <button key={m.id} className={'tab' + (mode === m.id ? ' on' : '')} onClick={() => onMode(m.id)}>
             {m.name}
@@ -123,14 +124,14 @@ function GameLobby({ data, mode, onMode, onBack, onEnter }: {
 
       {modeInfo && (
         <p className="notice">
-          {modeInfo.name}模式（{modeInfo.players}）：标“开发中”的游戏暂时不能开始。
+          {t('{mode}模式（{players}）：标“开发中”的游戏暂时不能开始。', { mode: modeInfo.name, players: modeInfo.players })}
           <button className="btn small primary" style={{ marginLeft: 8 }} onClick={() => onEnter(modeInfo.id)}>
-            进入{modeInfo.name}房间
+            {t('进入{mode}房间', { mode: modeInfo.name })}
           </button>
         </p>
       )}
       <label className="check">
-        <input type="checkbox" checked={liveOnly} onChange={(e) => setLiveOnly(e.target.checked)} /> 只看可游玩的
+        <input type="checkbox" checked={liveOnly} onChange={(e) => setLiveOnly(e.target.checked)} /> {t('只看可游玩的')}
       </label>
 
       {data.categories.map((c) => {
@@ -146,7 +147,7 @@ function GameLobby({ data, mode, onMode, onBack, onEnter }: {
                   <span className="lg-main">
                     <span className="game-name">{g.name}</span>
                     <span className="lg-meta">
-                      {playersText(g)}{g.local ? ' · 可本地轮流' : ''} · {g.modes.map((m) => data.modes.find((x) => x.id === m)!.name).join('/')}
+                      {playersText(g)}{g.local ? ' · ' + t('可本地轮流') : ''} · {g.modes.map((m) => data.modes.find((x) => x.id === m)!.name).join('/')}
                     </span>
                   </span>
                   {g.ready ? (
@@ -158,7 +159,7 @@ function GameLobby({ data, mode, onMode, onBack, onEnter }: {
                       ))}
                     </span>
                   ) : (
-                    <span className="tag wip">开发中</span>
+                    <span className="tag wip">{t('开发中')}</span>
                   )}
                 </div>
               ))}
@@ -166,9 +167,9 @@ function GameLobby({ data, mode, onMode, onBack, onEnter }: {
           </section>
         );
       })}
-      {games.length === 0 && <p className="notice">没有符合条件的游戏。</p>}
+      {games.length === 0 && <p className="notice">{t('没有符合条件的游戏。')}</p>}
 
-      <p className="footnote"><button className="link-btn" onClick={onBack}>← 返回首页</button></p>
+      <p className="footnote"><button className="link-btn" onClick={onBack}>{t('← 返回首页')}</button></p>
     </main>
   );
 }

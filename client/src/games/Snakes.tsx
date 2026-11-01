@@ -1,4 +1,5 @@
 import { AwardList, nameOf, type GameProps } from './shared';
+import { t } from '../i18n';
 
 /** 蛇梯棋：10×10，按“之”字形编号，从左下角 1 到 100 */
 export default function Snakes({ room, view, act }: GameProps) {
@@ -12,13 +13,13 @@ export default function Snakes({ room, view, act }: GameProps) {
 
   return (
     <div>
-      <h2>🐍 蛇梯棋</h2>
+      <h2>🐍 {t('蛇梯棋')}</h2>
       {view.winnerId ? (
-        <p className="question">🏆 {nameOf(room, view.winnerId)} 到达终点！</p>
+        <p className="question">🏆 {t('{name} 到达终点！', { name: nameOf(room, view.winnerId) })}</p>
       ) : (
         <p className="hint">
-          {myTurn ? '轮到你了，掷骰子！' : `等待 ${nameOf(room, view.turnId)} 掷骰子……`}
-          {view.lastRoll && <>　上一次：{nameOf(room, view.lastRoll.by)} 掷出 <b>{view.lastRoll.value}</b></>}
+          {myTurn ? t('轮到你了，掷骰子！') : t('等待 {name} 掷骰子……', { name: nameOf(room, view.turnId) })}
+          {view.lastRoll && <>　{t('上一次：{name} 掷出', { name: nameOf(room, view.lastRoll.by) })} <b>{view.lastRoll.value}</b></>}
         </p>
       )}
       <div className="sl-board">
@@ -37,7 +38,7 @@ export default function Snakes({ room, view, act }: GameProps) {
       </div>
       {!view.winnerId && (
         <button className="btn primary wide" disabled={!myTurn} onClick={() => act({ type: 'roll' })}>
-          🎲 掷骰子
+          🎲 {t('掷骰子')}
         </button>
       )}
       <ul className="chat-log">
@@ -47,7 +48,7 @@ export default function Snakes({ room, view, act }: GameProps) {
         {room.players.map((p) => (
           <li key={p.id}>
             <span>{p.avatar} {p.nickname}{view.turnId === p.id ? ' 👈' : ''}</span>
-            <b>第 {view.positions[p.id]} 格</b>
+            <b>{t('第 {n} 格', { n: view.positions[p.id] })}</b>
           </li>
         ))}
       </ul>

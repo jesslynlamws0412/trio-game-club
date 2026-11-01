@@ -1,4 +1,5 @@
-import { QUIZ_GAMES } from '../bank/games.js';
+﻿import { QUIZ_GAMES } from '../bank/games.js';
+import { EN_GAMES } from '../i18n/en/catalog.js';
 
 export type ModeId = 'solo' | 'duo' | 'trio' | 'party';
 
@@ -26,6 +27,8 @@ export interface GameInfo {
   maxPlayers?: number;
   /** 是否从题库抽题（房主可以在大厅里设置难度、选择自定义题库） */
   bank: boolean;
+  /** 是否已经有完整的英文版（房间里有玩家选了英文时，只有这些游戏能开始） */
+  en: boolean;
 }
 
 /** 默认只支持三人；已适配其他人数的游戏在这里登记 */
@@ -64,7 +67,7 @@ const QUIZ_IDS = new Set(QUIZ_GAMES.map((g) => g.id));
 export const LOCAL_GAMES = new Set(['number', 'memory', 'dice', 'idiom', 'rps', 'tacit', 'truth', 'tictactoe', 'gomoku', 'snakes', 'ludo', 'millionaire', 'liar', 'uno', 'jenga', 'scrabble']);
 
 /** 题库类游戏（除了最早的答题竞赛）按 bank/games.ts 的配置统一生成 */
-const QUIZ_ENTRIES: Omit<GameInfo, 'modes' | 'bank' | 'local'>[] = QUIZ_GAMES.filter((g) => g.id !== 'quiz').map((g) => ({
+const QUIZ_ENTRIES: Omit<GameInfo, 'modes' | 'bank' | 'local' | 'en'>[] = QUIZ_GAMES.filter((g) => g.id !== 'quiz').map((g) => ({
   id: g.id,
   name: g.name,
   icon: g.icon,
@@ -79,7 +82,7 @@ const QUIZ_ENTRIES: Omit<GameInfo, 'modes' | 'bank' | 'local'>[] = QUIZ_GAMES.fi
   ],
 }));
 
-const BASE_CATALOG: Omit<GameInfo, 'modes' | 'bank' | 'local'>[] = [
+const BASE_CATALOG: Omit<GameInfo, 'modes' | 'bank' | 'local' | 'en'>[] = [
   {
     id: 'undercover',
     name: '谁是卧底',
@@ -478,6 +481,7 @@ export const GAME_CATALOG: GameInfo[] = [...BASE_CATALOG, ...QUIZ_ENTRIES].map((
   ...g,
   maxPlayers: MAX_PLAYERS[g.id],
   bank: QUIZ_IDS.has(g.id),
+  en: EN_GAMES.includes(g.id),
   local: LOCAL_GAMES.has(g.id),
   modes: QUIZ_IDS.has(g.id) ? (['solo', 'duo', 'trio', 'party'] as ModeId[]) : (MODES_BY_GAME[g.id] ?? ['trio']),
 }));

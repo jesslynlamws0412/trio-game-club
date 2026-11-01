@@ -1,4 +1,5 @@
 import { AwardList, nameOf, type GameProps } from './shared';
+import { t } from '../i18n';
 
 export default function Jenga({ room, view, act }: GameProps) {
   const myTurn = view.turnId === room.you;
@@ -6,13 +7,13 @@ export default function Jenga({ room, view, act }: GameProps) {
 
   return (
     <div>
-      <h2>🧱 叠叠高 <small>已抽 {view.total} / {view.maxPulls} 块</small></h2>
+      <h2>🧱 {t('叠叠高')} <small>{t('已抽 {n} / {max} 块', { n: view.total, max: view.maxPulls })}</small></h2>
       {view.over ? (
         <p className="question">
-          {view.collapsedBy ? <>💥 {nameOf(room, view.collapsedBy)} 把塔抽倒了！</> : '🎉 塔一直没倒，大家都赢了！'}
+          {view.collapsedBy ? <>💥 {t('{name} 把塔抽倒了！', { name: nameOf(room, view.collapsedBy) })}</> : t('🎉 塔一直没倒，大家都赢了！')}
         </p>
       ) : (
-        <p className="hint">{myTurn ? '轮到你了：点一块积木抽出来（数字是塔倒的风险）' : `等待 ${nameOf(room, view.turnId)} 抽积木……`}</p>
+        <p className="hint">{myTurn ? t('轮到你了：点一块积木抽出来（数字是塔倒的风险）') : t('等待 {name} 抽积木……', { name: nameOf(room, view.turnId) })}</p>
       )}
       <div className="jenga-tower">
         {rows.map(({ row, i }: { row: boolean[]; i: number }) => {
@@ -28,7 +29,7 @@ export default function Jenga({ room, view, act }: GameProps) {
                     className={'jenga-block' + (has ? '' : ' gone') + (locked ? ' locked' : '')}
                     disabled={!can}
                     onClick={() => act({ type: 'pull', level: i, slot: s })}
-                    aria-label={`第 ${i + 1} 层第 ${s + 1} 块`}
+                    aria-label={t('第 {a} 层第 {b} 块', { a: i + 1, b: s + 1 })}
                   >
                     {has && risk !== null ? `${risk}%` : ''}
                   </button>
@@ -42,7 +43,7 @@ export default function Jenga({ room, view, act }: GameProps) {
         {room.players.map((p) => (
           <li key={p.id}>
             <span>{p.avatar} {p.nickname}{view.turnId === p.id ? ' 👈' : ''}</span>
-            <b>抽出 {view.pulls[p.id]} 块</b>
+            <b>{t('抽出 {n} 块', { n: view.pulls[p.id] })}</b>
           </li>
         ))}
       </ul>

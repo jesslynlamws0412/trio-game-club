@@ -7,6 +7,8 @@ export interface GameInfo {
   ready: boolean;
   modes: string[];
   bank: boolean;
+  /** 有完整的英文版 */
+  en: boolean;
   local: boolean;
 }
 
@@ -18,6 +20,7 @@ export interface PlayerView {
   connected: boolean;
   score: number;
   vote: string | null;
+  lang: 'zh' | 'en';
 }
 
 export interface RoomView {

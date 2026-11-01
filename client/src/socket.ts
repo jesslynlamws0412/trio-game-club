@@ -1,7 +1,14 @@
 import { io } from 'socket.io-client';
 import type { Ack } from './types';
+import { loadLang } from './langStore';
 
-export const socket = io({ autoConnect: true });
+/** 每次连接（包括断线重连）都把当前选的语言告诉服务器 */
+export const langAuth = (cb: (data: { lang: string }) => void) => cb({ lang: loadLang() });
+
+export const socket = io({ autoConnect: true, auth: langAuth });
+
+/** 本地轮流时第二位玩家使用的连接：切换语言时也要通知服务器 */
+export const extraSockets = new Set<typeof socket>();
 
 /** 当前负责发送操作的连接。平时就是 socket；本地轮流时在两位玩家的连接之间切换。 */
 let current = socket;
@@ -32,8 +39,9 @@ export function saveLocal(v: { code: string; token: string } | null) {
 export function send(event: string, data?: unknown): Promise<Ack> {
   const sock = current;
   return new Promise((resolve) => {
-    if (!sock.connected) return resolve({ ok: false, error: '尚未连接服务器，请稍候再试' });
-    const timer = setTimeout(() => resolve({ ok: false, error: '服务器无响应' }), 8000);
+    const en = loadLang() === 'en';
+    if (!sock.connected) return resolve({ ok: false, error: en ? 'Not connected to the server yet. Please try again shortly.' : '尚未连接服务器，请稍候再试' });
+    const timer = setTimeout(() => resolve({ ok: false, error: en ? 'The server is not responding' : '服务器无响应' }), 8000);
     sock.emit(event, data, (res: Ack) => {
       clearTimeout(timer);
       resolve(res);

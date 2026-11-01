@@ -59,7 +59,7 @@ try {
 
   // 其余全部测试共用一个全新的服务器
   dir = freshDir();
-  await startServer(dir);
+  await startServer(dir, { I18N_AUDIT: '1' });
   run('大厅与房间（三人）', 'lobby.test.mjs');
   run('人数模式：单人/双人/多人', 'modes.test.mjs');
   run('三人游戏：卧底/答题/海龟汤/狼人杀', 'games.test.mjs');
@@ -75,6 +75,7 @@ try {
   run('题库系统', 'bank.test.mjs', [], { tsx: true });
   run('稳定性：乱发数据/断线重连/并发', 'robust.test.mjs');
   run('全平台矩阵：每款游戏 × 每种模式', 'matrix.test.mjs');
+  run('英文版：翻译、中英文同房间、漏翻审计', 'lang.test.mjs', [], { tsx: true });
   await stopServer();
   const u = spawnSync(process.execPath, ['--import', 'tsx', path.join(root, 'server/test/monopoly.unit.ts')], { cwd: root, encoding: 'utf8' });
   const um = (u.stdout + u.stderr).match(/全部 (\d+) 项通过/);

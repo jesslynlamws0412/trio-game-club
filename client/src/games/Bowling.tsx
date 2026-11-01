@@ -1,4 +1,5 @@
 import { AwardList, nameOf, type GameProps } from './shared';
+import { t } from '../i18n';
 import MeterBar from './MeterBar';
 
 /** 10 个球瓶的三角形排列（后排在上）：行里的下标 */
@@ -56,14 +57,14 @@ export default function Bowling({ room, view, act }: GameProps) {
   if (view.phase === 'over') {
     return (
       <div>
-        <h2>🎳 保龄球 · 最终成绩</h2>
+        <h2>🎳 {t('保龄球')} · {t('最终成绩')}</h2>
         {board}
         <ol className="rank">
           {view.ranking.map((r: any) => (
             <li key={r.id}>
               <span className="medal">{['🥇', '🥈', '🥉'][r.rank - 1]}</span>
               <span>{nameOf(room, r.id)}</span>
-              <span className="score">{r.points} 分</span>
+              <span className="score">{t('{n} 分', { n: r.points })}</span>
             </li>
           ))}
         </ol>
@@ -75,10 +76,10 @@ export default function Bowling({ room, view, act }: GameProps) {
   const myTurn = view.turnId === room.you;
   return (
     <div>
-      <h2>🎳 保龄球 <small>第 {view.frame + 1} / 10 格 · 第 {view.throwNo + 1} 球</small></h2>
+      <h2>🎳 {t('保龄球')} <small>{t('第 {a} / 10 格 · 第 {b} 球', { a: view.frame + 1, b: view.throwNo + 1 })}</small></h2>
       <p className="hint">
         {view.phase === 'aim'
-          ? myTurn ? '指针越靠近正中间，击倒的球瓶越多。点“投球”！' : `等待 ${nameOf(room, view.turnId)} 投球……`
+          ? myTurn ? t('指针越靠近正中间，击倒的球瓶越多。点“投球”！') : t('等待 {name} 投球……', { name: nameOf(room, view.turnId) })
           : ''}
       </p>
       <div className="pins">
@@ -91,12 +92,12 @@ export default function Bowling({ room, view, act }: GameProps) {
       <MeterBar meter={view.meter} zone={0.06} />
       {view.phase === 'aim' && (
         <button className="btn primary wide" disabled={!myTurn} onClick={() => act({ type: 'throw' })}>
-          {myTurn ? '投球！' : '等待……'}
+          {myTurn ? t('投球！') : t('等待……')}
         </button>
       )}
       {view.last && (
         <p className="answer-box">
-          {nameOf(room, view.last.by)}：{view.last.strike ? '🎉 全中 Strike！' : view.last.spare ? '✨ 补中 Spare！' : view.last.gutter ? '洗澡（一个都没倒）' : `击倒 ${view.last.knocked} 个`}
+          {nameOf(room, view.last.by)}：{view.last.strike ? t('🎉 全中 Strike！') : view.last.spare ? t('✨ 补中 Spare！') : view.last.gutter ? t('洗澡（一个都没倒）') : t('击倒 {n} 个', { n: view.last.knocked })}
         </p>
       )}
       {board}

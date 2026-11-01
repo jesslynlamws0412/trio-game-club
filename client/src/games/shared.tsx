@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { send } from '../socket';
 import type { RoomView } from '../types';
+import { t } from '../i18n';
 
 export interface GameProps {
   room: RoomView;
@@ -35,7 +36,7 @@ export function useCountdown(endsInMs: number, resetKey: unknown): number {
 }
 
 export function nameOf(room: RoomView, id: string | null | undefined) {
-  if (id === 'cpu') return '🤖 电脑';
+  if (id === 'cpu') return '🤖 ' + t('电脑');
   const p = room.players.find((x) => x.id === id);
   return p ? `${p.avatar} ${p.nickname}` : '?';
 }
@@ -58,7 +59,7 @@ export function ChatBox({
   return (
     <div className="chat">
       <ul className="chat-log">
-        {messages.length === 0 && <li className="hint">还没有人发言</li>}
+        {messages.length === 0 && <li className="hint">{t('还没有人发言')}</li>}
         {messages.map((m, i) => (
           <li key={i} className={m.playerId === room.you ? 'mine' : ''}>
             <b>{nameOf(room, m.playerId)}：</b>{m.text}
@@ -69,11 +70,11 @@ export function ChatBox({
         <input
           value={text}
           maxLength={100}
-          placeholder={placeholder ?? '输入内容后回车发送'}
+          placeholder={placeholder ?? t('输入内容后回车发送')}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && submit()}
         />
-        <button className="btn small green" onClick={submit}>发送</button>
+        <button className="btn small green" onClick={submit}>{t('发送')}</button>
       </div>
     </div>
   );
@@ -86,7 +87,7 @@ export function AwardList({ room }: { room: RoomView }) {
       {room.players.map((p) => (
         <li key={p.id}>
           <span>{p.avatar} {p.nickname}</span>
-          <b>+{room.awards![p.id] ?? 0} 分</b>
+          <b>{t('+{n} 分', { n: room.awards![p.id] ?? 0 })}</b>
         </li>
       ))}
     </ul>

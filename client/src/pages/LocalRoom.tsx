@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
-import { loadLocal, localSetup, saveLocal, saveSession, setActiveSocket, socket } from '../socket';
+import { extraSockets, langAuth, loadLocal, localSetup, saveLocal, saveSession, setActiveSocket, socket } from '../socket';
+import { t } from '../i18n';
 import type { RoomView } from '../types';
 import Room from './Room';
 
@@ -55,7 +56,8 @@ export default function LocalRoom({ room, onLeave }: { room: RoomView; onLeave: 
 
   // 第二位玩家的连接：加入同一个房间（用创建时拿到的密钥），断线后用 token 自动重连
   useEffect(() => {
-    const g = io({ forceNew: true });
+    const g = io({ forceNew: true, auth: langAuth });
+    extraSockets.add(g);
     setGuest(g);
     g.on('room:state', (v: RoomView) => setGuestView(v));
     let joined = false;
@@ -66,7 +68,7 @@ export default function LocalRoom({ room, onLeave }: { room: RoomView; onLeave: 
           if (res?.ok) joined = true;
           else {
             saveLocal(null);
-            setError('本地对局已中断，请退出房间后重新开始。');
+            setError(t('本地对局已中断，请退出房间后重新开始。'));
           }
         });
         return;
@@ -78,7 +80,7 @@ export default function LocalRoom({ room, onLeave }: { room: RoomView; onLeave: 
           joined = true;
           localSetup.pending = null;
           saveLocal({ code: res.code, token: res.token });
-        } else setError(res?.error ?? '第二位玩家加入失败');
+        } else setError(res?.error ?? t('第二位玩家加入失败'));
       });
     };
     const onConnect = () => join();
@@ -88,11 +90,12 @@ export default function LocalRoom({ room, onLeave }: { room: RoomView; onLeave: 
       if (!joined && g.connected && localSetup.pending) join();
     }, 200);
     const giveUp = setTimeout(() => {
-      if (!joined && !loadLocal()) setError('本地对局已中断，请退出房间后重新开始。');
+      if (!joined && !loadLocal()) setError(t('本地对局已中断，请退出房间后重新开始。'));
     }, 5000);
     return () => {
       clearInterval(wait);
       clearTimeout(giveUp);
+      extraSockets.delete(g);
       g.close();
     };
   }, [room.code]);
@@ -134,12 +137,12 @@ export default function LocalRoom({ room, onLeave }: { room: RoomView; onLeave: 
       <main className="room">
         <section className="paper card">
           <p className="error">{error}</p>
-          <button className="btn primary" onClick={leave}>退出房间</button>
+          <button className="btn primary" onClick={leave}>{t('退出房间')}</button>
         </section>
       </main>
     );
   }
-  if (!guestView) return <div className="center-msg">正在准备本地对局……</div>;
+  if (!guestView) return <div className="center-msg">{t('正在准备本地对局……')}</div>;
 
   if (needCover) {
     const target = room.players.find((p) => p.id === next) ?? guestView.players.find((p) => p.id === next);
@@ -148,10 +151,10 @@ export default function LocalRoom({ room, onLeave }: { room: RoomView; onLeave: 
       <main className="room">
         <section className="paper card handoff">
           <div className="big-icon">🔒</div>
-          <h2>请把设备交给 {target?.avatar} {target?.nickname}</h2>
-          <p className="hint">轮到 TA 操作了。换人之前，上一位玩家看不到的信息不会显示在屏幕上。</p>
+          <h2>{t('请把设备交给')} {target?.avatar} {target?.nickname}</h2>
+          <p className="hint">{t('轮到 TA 操作了。换人之前，上一位玩家看不到的信息不会显示在屏幕上。')}</p>
           <button className="btn primary wide" onClick={() => setActive(idx)}>
-            我是 {target?.nickname}，继续
+            {t('我是 {name}，继续', { name: target?.nickname ?? '' })}
           </button>
         </section>
       </main>
@@ -163,10 +166,10 @@ export default function LocalRoom({ room, onLeave }: { room: RoomView; onLeave: 
   return (
     <>
       <div className="local-bar">
-        🎴 本地轮流 · 当前玩家：{me?.avatar} <b>{me?.nickname}</b>
+        🎴 {t('本地轮流 · 当前玩家：')}{me?.avatar} <b>{me?.nickname}</b>
         {view.phase === 'lobby' && (
           <button className="btn small ghost" onClick={() => setActive(active === 0 ? 1 : 0)}>
-            切换到 {other?.nickname}
+            {t('切换到 {name}', { name: other?.nickname ?? '' })}
           </button>
         )}
       </div>

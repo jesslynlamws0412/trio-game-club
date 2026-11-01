@@ -5,12 +5,15 @@ import Platform from './pages/Platform';
 import Room from './pages/Room';
 import LocalRoom from './pages/LocalRoom';
 import SoundSettings from './components/SoundSettings';
+import LangSwitch from './components/LangSwitch';
 import { sfx, unlockAudio } from './audio';
+import { t, useLang } from './i18n';
 
 export default function App() {
   const [room, setRoom] = useState<RoomView | null>(null);
   const [connected, setConnected] = useState(socket.connected);
   const [resuming, setResuming] = useState(!!loadSession());
+  const lang = useLang();
 
   // 全局：点任何可用的按钮都有点击声；第一次点击时解锁音频并开始背景音乐
   useEffect(() => {
@@ -40,13 +43,13 @@ export default function App() {
     const onKicked = () => {
       saveSession(null);
       setRoom(null);
-      alert('你已被房主移出房间');
+      alert(t('你已被房主移出房间'));
     };
     const onClosed = () => {
       saveSession(null);
       saveLocal(null);
       setRoom(null);
-      alert('房主已关闭房间');
+      alert(t('房主已关闭房间'));
     };
     socket.on('room:closed', onClosed);
     socket.on('room:kicked', onKicked);
@@ -69,12 +72,14 @@ export default function App() {
     setRoom(null);
   };
 
+  // key={lang}：切换语言时整个页面重新绘制一遍，所有文字都换成新语言
   return (
-    <div className="app">
+    <div className="app" key={lang}>
+      <LangSwitch />
       <SoundSettings />
-      {!connected && <div className="banner">与服务器断开连接，正在重连……</div>}
+      {!connected && <div className="banner">{t('与服务器断开连接，正在重连……')}</div>}
       {resuming ? (
-        <div className="center-msg">正在回到你的房间……</div>
+        <div className="center-msg">{t('正在回到你的房间……')}</div>
       ) : room ? (
         room.local ? <LocalRoom room={room} onLeave={leave} /> : <Room room={room} onLeave={leave} />
       ) : (

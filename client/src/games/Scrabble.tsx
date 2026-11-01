@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AwardList, nameOf, type GameProps } from './shared';
+import { t } from '../i18n';
 
 const PREMIUM_LABEL: Record<string, string> = { TW: '3×词', DW: '2×词', TL: '3×字', DL: '2×字' };
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -77,18 +78,18 @@ export default function Scrabble({ room, view, act }: GameProps) {
 
   return (
     <div>
-      <h2>🔤 拼字游戏 <small>牌袋剩 {view.bag} 张</small></h2>
+      <h2>🔤 {t('拼字游戏')} <small>{t('牌袋剩 {n} 张', { n: view.bag })}</small></h2>
       {view.over ? (
-        <p className="question">游戏结束！{view.wentOut ? `${nameOf(room, view.wentOut)} 用完了所有牌。` : ''}</p>
+        <p className="question">{t('游戏结束！')}{view.wentOut ? t('{name} 用完了所有牌。', { name: nameOf(room, view.wentOut) }) : ''}</p>
       ) : (
         <p className="hint">
           {myTurn
             ? exchanging
-              ? '选择要换掉的牌，然后点“确认换牌”。'
+              ? t('选择要换掉的牌，然后点“确认换牌”。')
               : view.empty
-                ? '轮到你了：先点手牌，再点棋盘格子放牌，拼出的第一个单词要经过中心 ★。'
-                : '轮到你了：点手牌，再点棋盘空格放牌；点已放的牌可以收回。'
-            : `等待 ${nameOf(room, view.turnId)}……`}
+                ? t('轮到你了：先点手牌，再点棋盘格子放牌，拼出的第一个单词要经过中心 ★。')
+                : t('轮到你了：点手牌，再点棋盘空格放牌；点已放的牌可以收回。')
+            : t('等待 {name}……', { name: nameOf(room, view.turnId) })}
         </p>
       )}
 
@@ -106,7 +107,7 @@ export default function Scrabble({ room, view, act }: GameProps) {
                 key={key}
                 className={'scr-cell' + (prem ? ' p-' + prem : '') + (cell ? ' placed' : '') + (p ? ' pending' : '') + (cell && lastCells.has(key) ? ' last' : '')}
                 onClick={() => clickCell(r, c)}
-                aria-label={`${r + 1}行${c + 1}列`}
+                aria-label={t('第 {r} 行第 {c} 列', { r: r + 1, c: c + 1 })}
               >
                 {letter ? (
                   <>
@@ -116,7 +117,7 @@ export default function Scrabble({ room, view, act }: GameProps) {
                 ) : center ? (
                   '★'
                 ) : (
-                  <small>{prem ? PREMIUM_LABEL[prem] : ''}</small>
+                  <small>{prem ? t(PREMIUM_LABEL[prem]) : ''}</small>
                 )}
               </button>
             );
@@ -126,21 +127,21 @@ export default function Scrabble({ room, view, act }: GameProps) {
 
       {askBlank && (
         <div className="scr-blank">
-          <span>空白牌当作哪个字母？</span>
+          <span>{t('空白牌当作哪个字母？')}</span>
           <div className="scr-letters">
             {LETTERS.map((l) => <button key={l} className="btn small ghost" onClick={() => chooseLetter(l)}>{l}</button>)}
           </div>
-          <button className="btn small ghost" onClick={() => setAskBlank(null)}>取消</button>
+          <button className="btn small ghost" onClick={() => setAskBlank(null)}>{t('取消')}</button>
         </div>
       )}
 
       {view.last && !view.over && (
         <p className="answer-box">
-          {nameOf(room, view.last.by)}：{view.last.words.map((w: any) => `${w.word}(${w.points})`).join('、')}{view.last.bingo ? ' ＋50 全部用完！' : ''} = {view.last.total} 分
+          {nameOf(room, view.last.by)}：{view.last.words.map((w: any) => `${w.word}(${w.points})`).join(', ')}{view.last.bingo ? ' ' + t('＋50 全部用完！') : ''} = {t('{n} 分', { n: view.last.total })}
         </p>
       )}
 
-      <div className="hint">你的字母牌（点选，再点棋盘）：</div>
+      <div className="hint">{t('你的字母牌（点选，再点棋盘）：')}</div>
       <div className="scr-rack">
         {rack.map((t: any) => {
           const placedNow = used.has(t.id);
@@ -165,17 +166,17 @@ export default function Scrabble({ room, view, act }: GameProps) {
 
       {!view.over && myTurn && !exchanging && (
         <div className="actions row">
-          <button className="btn small green" disabled={Object.keys(pending).length === 0} onClick={submit}>✔ 提交 ({Object.keys(pending).length})</button>
-          <button className="btn small ghost" disabled={Object.keys(pending).length === 0} onClick={() => setPending({})}>收回全部</button>
-          <button className="btn small ghost" onClick={shuffleRack}>🔀 打乱</button>
-          <button className="btn small ghost" disabled={!view.canExchange} onClick={() => setExchanging([])}>换牌</button>
-          <button className="btn small ghost" onClick={() => act({ type: 'pass' })}>跳过</button>
+          <button className="btn small green" disabled={Object.keys(pending).length === 0} onClick={submit}>✔ {t('提交')} ({Object.keys(pending).length})</button>
+          <button className="btn small ghost" disabled={Object.keys(pending).length === 0} onClick={() => setPending({})}>{t('收回全部')}</button>
+          <button className="btn small ghost" onClick={shuffleRack}>🔀 {t('打乱')}</button>
+          <button className="btn small ghost" disabled={!view.canExchange} onClick={() => setExchanging([])}>{t('换牌')}</button>
+          <button className="btn small ghost" onClick={() => act({ type: 'pass' })}>{t('跳过')}</button>
         </div>
       )}
       {!view.over && myTurn && exchanging && (
         <div className="actions row">
-          <button className="btn small green" disabled={exchanging.length === 0} onClick={confirmExchange}>确认换牌 ({exchanging.length})</button>
-          <button className="btn small ghost" onClick={() => setExchanging(null)}>取消</button>
+          <button className="btn small green" disabled={exchanging.length === 0} onClick={confirmExchange}>{t('确认换牌')} ({exchanging.length})</button>
+          <button className="btn small ghost" onClick={() => setExchanging(null)}>{t('取消')}</button>
         </div>
       )}
 
@@ -183,11 +184,11 @@ export default function Scrabble({ room, view, act }: GameProps) {
         {ranking.map((p) => (
           <li key={p.id}>
             <span>{p.avatar} {p.nickname}{view.turnId === p.id ? ' 👈' : ''}</span>
-            <b>{view.scores[p.id]} 分{view.over && view.racks ? ` · 剩 ${view.racks[p.id].join('') || '无'}` : ` · ${view.counts[p.id]} 张`}</b>
+            <b>{t('{n} 分', { n: view.scores[p.id] })}{view.over && view.racks ? ` · ${t('剩')} ${view.racks[p.id].join('') || t('无')}` : ` · ${t('{n} 张字母牌', { n: view.counts[p.id] })}`}</b>
           </li>
         ))}
       </ul>
-      {!view.over && view.stall > 0 && <p className="hint">连续 {view.stall} 手没人得分，满 {view.stallLimit} 手游戏结束。</p>}
+      {!view.over && view.stall > 0 && <p className="hint">{t('连续 {a} 手没人得分，满 {b} 手游戏结束。', { a: view.stall, b: view.stallLimit })}</p>}
 
       <ul className="chat-log">
         {view.log.map((l: string, i: number) => <li key={i}>{l}</li>)}

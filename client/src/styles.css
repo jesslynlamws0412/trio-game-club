@@ -518,3 +518,8 @@ img, canvas, svg { max-width: 100%; }
 .scr-blank { background: var(--cream-dark); padding: 8px; border-radius: 6px; text-align: center; margin: 6px 0; }
 .scr-letters { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; margin: 6px 0; }
 .scr-letters .btn { min-width: 30px; padding: 4px 6px; }
+
+/* 语言按钮（在声音按钮左边） */
+.lang-btn { position: fixed; top: 8px; right: 56px; z-index: 35; height: 40px; min-width: 40px; padding: 0 10px; border-radius: 20px; border: 2px solid var(--gold); background: var(--cream); font-family: var(--font); font-size: 14px; font-weight: bold; color: var(--brown); cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,.4); }
+.tag.en-ok { background: #2f6a52; color: #fff; }
+.tag.zh-only { background: #8a6d3b; color: #fff; }

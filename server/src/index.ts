@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Server, type Socket } from 'socket.io';
 import { PLATFORM } from './games/platform.js';
+import { audit, normLang, recordAudit, translateDeep, type Lang } from './i18n.js';
 import { BANKS, BUILTIN, bankStats } from './bank/index.js';
 import {
   RECONNECT_GRACE_MS,
@@ -36,7 +37,9 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: true }, maxHttpBufferSize: 100_000 });
 
 app.get('/healthz', (_req, res) => res.send('ok'));
-app.get('/api/platform', (_req, res) => res.json(PLATFORM));
+const AUDIT = process.env.I18N_AUDIT === '1';
+if (AUDIT) app.get('/api/i18n-audit', (_req, res) => res.json(Object.fromEntries(Object.entries(audit).map(([k, v]) => [k, [...v]]))));
+app.get('/api/platform', (req, res) => res.json(translateDeep(PLATFORM, normLang(req.query.lang))));
 
 // 生产环境：同时托管前端打包文件
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -48,7 +51,16 @@ if (fs.existsSync(clientDist)) {
 
 function broadcast(room: Room) {
   for (const p of room.players) {
-    if (p.socketId) io.to(p.socketId).emit('room:state', viewFor(room, p));
+    if (!p.socketId) continue;
+    const view = viewFor(room, p);
+    if (AUDIT) {
+      // 游戏列表里有所有游戏的规则（还没翻译的不算漏翻），所以单独处理：只检查已有英文版的游戏
+      const { catalog, ...rest } = view;
+      const names = room.players.map((x) => x.nickname);
+      recordAudit(room.currentGame ?? 'lobby', rest, names);
+      for (const g of catalog) if (g.en) recordAudit(g.id, g, names);
+    }
+    io.to(p.socketId).emit('room:state', translateDeep(view, p.lang));
   }
 }
 
@@ -57,6 +69,7 @@ type Ack = (res: unknown) => void;
 function attach(socket: Socket, room: Room, player: Player) {
   player.socketId = socket.id;
   player.connected = true;
+  player.lang = (socket.data.lang as Lang | undefined) ?? 'zh';
   socket.data.code = room.code;
   socket.data.playerId = player.id;
 }
@@ -67,11 +80,28 @@ function ctx(socket: Socket): { room: Room; player: Player } | null {
   return room && player ? { room, player } : null;
 }
 
-function reply(ack: Ack | undefined, res: unknown) {
-  if (typeof ack === 'function') ack(res);
+function replyWith(ack: Ack | undefined, res: unknown, lang: Lang, game = 'errors') {
+  if (AUDIT && game !== 'errors' && (res as { ok?: boolean })?.ok === false) recordAudit(game, res);
+  // 错误提示按这位玩家的语言翻译；成功的回复里没有需要翻译的文字
+  if (typeof ack === 'function') ack(lang === 'en' && (res as { ok?: boolean })?.ok === false ? translateDeep(res, lang) : res);
 }
 
 io.on('connection', (socket) => {
+  socket.data.lang = normLang(socket.handshake.auth?.lang);
+  // 这个连接上所有的回复都按它的语言翻译
+  const lang = () => socket.data.lang as Lang;
+  const reply = (ack: Ack | undefined, res: unknown) => replyWith(ack, res, lang());
+
+  // 玩家切换语言：之后发给他的所有文字都用新语言
+  socket.on('lang:set', (data: any, ack?: Ack) => {
+    socket.data.lang = normLang(data?.lang);
+    const c = ctx(socket);
+    if (c) {
+      c.player.lang = lang();
+      broadcast(c.room);
+    }
+    replyWith(ack, { ok: true }, lang());
+  });
   // 简单限速：一秒内事件过多的连接，多余的事件直接丢弃（防止刷屏拖垮服务器）
   let windowStart = Date.now();
   let count = 0;
@@ -187,7 +217,7 @@ io.on('connection', (socket) => {
     if (!c) return reply(ack, { ok: false, error: '你不在任何房间中' });
     if (c.room.phase !== 'playing' || !c.room.engine) return reply(ack, { ok: false, error: '当前没有进行中的游戏' });
     const res = c.room.engine.handleAction(c.player.id, data);
-    reply(ack, res.ok ? { ok: true } : res);
+    replyWith(ack, res.ok ? { ok: true } : res, lang(), c.room.currentGame ?? 'errors');
     if (!res.ok) return;
     touchIdle(c.room);
     if (res.delta !== undefined) {
