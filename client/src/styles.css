@@ -646,3 +646,43 @@ h1, h2, h3, .question { text-wrap: balance; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ===== 棋盘与图形（贴纸风统一：墨色粗边 + 偏移阴影 + 清晰分格） ===== */
+.sl-board, .scr-board, .sheep-board { border: 3px solid var(--brown); border-radius: 12px; box-shadow: 4px 4px 0 var(--brown); overflow: hidden; }
+.sl-board { gap: 2px; background: var(--brown); padding: 0; }
+.sl-cell { background: #fffdf7; font-size: 10px; }
+.sl-cell.ladder { background: #cfeee6; }
+.sl-cell.snake { background: #ffd9d2; }
+.sl-cell.goal { background: var(--yellow); }
+.sl-n { color: var(--brown); font-weight: 700; }
+.sl-tag { font-size: 10px; font-weight: 700; }
+.sl-pieces { font-size: 14px; }
+.scr-board { background: var(--brown); padding: 2px; }
+.sheep-board { background: #fff3c4; }
+.sheep-tray { background: var(--brown); border-radius: 10px; box-shadow: 3px 3px 0 var(--brown); }
+.sheep-slot { border-radius: 6px; }
+.ludo-ring { max-width: 340px; padding: 6px; background: #fff3c4; border: 3px solid var(--brown); border-radius: 50%; box-shadow: 4px 4px 0 var(--brown); }
+.ludo-ring circle { stroke-width: 1.6px; }
+.ludo-player { border: 2px solid var(--brown); border-left-width: 8px; border-radius: 10px; background: #fff; padding: 6px 10px; }
+.jenga-tower { background: #fff3c4; border: 3px solid var(--brown); border-radius: 12px; box-shadow: 4px 4px 0 var(--brown); padding: 12px 8px; }
+.jenga-block { border-color: var(--brown); box-shadow: 2px 2px 0 var(--brown); }
+.jenga-block.gone { box-shadow: none; border-color: #c9bfa6; }
+.jenga-bar { border-color: var(--brown); }
+.mil-step { border-color: var(--brown); }
+.mil-step.safe { border-color: var(--wine); border-width: 2px; }
+.pins, .court { background: #fff3c4; border: 2.5px solid var(--brown); border-radius: 12px; padding: 8px; }
+.rps-btn { padding: 14px 6px; }
+.react-pad { border-color: var(--brown); box-shadow: 4px 4px 0 var(--brown); font-weight: 900; }
+.mono-board, .board { border-radius: 12px; }
+
+/* ===== 动效细节 ===== */
+@keyframes flip { from { transform: rotateY(90deg); } to { transform: none; } }
+@keyframes tumble { from { transform: rotate(-140deg) scale(0.7); opacity: 0.5; } to { transform: none; opacity: 1; } }
+.mem-card.open { animation: flip 0.22s cubic-bezier(0.22, 1, 0.36, 1); }
+.die { animation: tumble 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+.mode-card, .game-tile, .lobby-game, .game, .avatar-btn { transition: transform 0.14s ease-out, box-shadow 0.14s ease-out; }
+@media (hover: hover) {
+  .mode-card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--brown); }
+  .game-tile:hover { transform: translateY(-2px); }
+  .avatar-btn:hover { transform: translateY(-2px); }
+}
