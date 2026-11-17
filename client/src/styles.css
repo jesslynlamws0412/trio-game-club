@@ -587,3 +587,62 @@ input:focus { outline: 3px solid var(--yellow); }
 .app { padding-top: 60px; }
 .masthead h1 { font-size: 28px; }
 @media (min-width: 640px) { .masthead h1 { font-size: 40px; } }
+
+/* ===== 游戏页精修（贴纸派对） ===== */
+::selection { background: var(--yellow); color: var(--brown); }
+button, .btn, .tab, .mode-card, .avatar-btn { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline-color: var(--yellow); outline-offset: 0; }
+h1, h2, h3, .question { text-wrap: balance; }
+.timer, .score, .room-code, .big-count, .die, .stat b, .rank li .score, .mil-step, .sl-n, .guess-log .digits { font-variant-numeric: tabular-nums; }
+* { scrollbar-color: var(--brown) transparent; }
+
+/* 按钮：悬停抬起、按下压平、禁用有明确样子 */
+@media (hover: hover) {
+  .btn:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--brown); }
+  .btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--brown); }
+}
+.btn:disabled { opacity: 1; background: #ece4cf; color: #5f5343; border-style: dashed; box-shadow: none; }
+.btn { transition: transform 0.12s ease-out, box-shadow 0.12s ease-out; }
+
+/* 答题：对错不只靠颜色，加符号 */
+.btn.opt.right::before { content: '✓ '; font-weight: 900; }
+.btn.opt.wrong::before { content: '✗ '; font-weight: 900; }
+.btn.opt.right { background: var(--green); }
+.btn.opt.wrong { background: var(--wine); }
+
+/* 倒计时 / 结果 / 词卡 / 身份卡 */
+.timer { background: var(--wine); border: 2.5px solid var(--brown); box-shadow: 3px 3px 0 var(--brown); font-weight: 900; }
+.panel.result { background: #fff3c4; border-width: 2.5px; box-shadow: 3px 3px 0 var(--brown); }
+.panel.result h3 { font-size: 24px; font-weight: 900; }
+.word-card { background: #fff3c4; border: 2.5px solid var(--brown); border-radius: 14px; box-shadow: 3px 3px 0 var(--brown); }
+.word-card .word { font-weight: 900; }
+.role-card { background: linear-gradient(#fff, #ffe9a8); }
+
+/* 抽卡：每类卡一种底色，一眼分辨 */
+.pcard { border: 2.5px solid var(--brown); border-radius: 14px; background: #fff; box-shadow: 4px 4px 0 var(--brown); }
+.pcard.t-fate { background: #ffe3dc; }
+.pcard.t-task { background: #d9f0ea; }
+.pcard.t-punish { background: #e4e1f2; }
+.pcard.t-event { background: #fff3c4; }
+.pcard.t-private { background: var(--wine); color: #fff; }
+.pcard.is-private { background: #ffe3dc; }
+.pc-title { font-weight: 900; }
+
+/* 棋盘 / 方块统一描边 */
+.tile, .mono-tile { border-color: var(--brown); }
+.mem-card { border-color: var(--brown); box-shadow: 2px 2px 0 var(--brown); }
+.mem-card.open { box-shadow: none; }
+.die { border: 2px solid var(--brown); border-radius: 10px; }
+.uno-card, .sheep-tile, .scr-tile { box-shadow: 2px 2px 0 var(--brown); }
+.chat-log, .meter, .bowl-frame, .stat { border-color: var(--brown); }
+
+/* 入场：进入游戏界面的一次性轻动效 */
+@keyframes rise { from { opacity: 0.4; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes pop { from { opacity: 0.4; transform: scale(0.9) rotate(-2deg); } to { opacity: 1; transform: none; } }
+.playing { animation: rise 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+.pcard { animation: pop 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
